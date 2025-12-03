@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ materia.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4 gap-3">
+        <div>
+          <h2><i class="fas fa-book"></i> {{ materia.nombre }}</h2>
+        </div>
+        <div class="d-flex flex-column flex-md-row gap-2">
+          {% if user.is_authenticated and user.rol == 'administrador' %}
+          <a href="{% url 'materias:editar' materia.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Editar
+          </a>
+          {% if materia.puede_eliminarse %}
+          <a href="{% url 'materias:eliminar' materia.pk %}" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Eliminar
+          </a>
+          {% endif %} {% endif %}
+          <a href="{% url 'materias:lista' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+          </a>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Información Principal -->
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header">
+              <h5>
+                <i class="fas fa-info-circle"></i> Información de la Materia
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-12 col-lg-6 mb-3">
+                  <dl class="row mb-2">
+                    <dt class="col-4">Código:</dt>
+                    <dd class="col-8">
+                      <code class="text-primary fs-5">{{ materia.codigo }}</code>
+                    </dd>
+                  </dl>
+
+                  <dl class="row mb-2">
+                    <dt class="col-4">Nombre:</dt>
+                    <dd class="col-8">
+                      <strong>{{ materia.nombre }}</strong>
+                    </dd>
+                  </dl>
+
+                  <dl class="row mb-2">
+                    <dt class="col-4">Carrera:</dt>
+                    <dd class="col-8">
+                      <a href="{% url 'carreras:detalle' materia.carrera.pk %}" class="text-decoration-none">
+                        <span class="badge bg-info text-dark fs-6 text-wrap">{{ materia.carrera.nombre }}</span>
+                      </a>
+                    </dd>
+                  </dl>
+
+                  <dl class="row mb-2">
+                    <dt class="col-4">Año de Cursado:</dt>
+                    <dd class="col-8">
+                      <span class="badge bg-secondary fs-6">{{ materia.anio_cursado }}° Año</span>
+                    </dd>
+                  </dl>
+                </div>
+                <div class="col-md-12 col-lg-6 mb-3">
+                  <dl class="row mb-2">
+                    <dt class="col-5">Modalidad:</dt>
+                    <dd class="col-7">
+                      <span class="badge bg-primary fs-6 text-wrap">{{ materia.get_cuatrimestre_display }}</span>
+                    </dd>
+                  </dl>
+
+                  <dl class="row mb-2">
+                    <dt class="col-5">Carga Horaria:</dt>
+                    <dd class="col-7">
+                      <i class="fas fa-clock text-muted"></i> {{ materia.carga_horaria }} horas
+                    </dd>
+                  </dl>
+
+                  <dl class="row mb-2">
+                    <dt class="col-5">Estado:</dt>
+                    <dd class="col-7">
+                      {% if materia.activa %}
+                      <span class="badge bg-success fs-6">
+                        <i class="fas fa-check"></i> Activa
+                      </span>
+                      {% else %}
+                      <span class="badge bg-danger fs-6">
+                        <i class="fas fa-times"></i> Inactiva
+                      </span>
+                      {% endif %}
+                    </dd>
+                  </dl>
+
+                  <dl class="row mb-2">
+                    <dt class="col-5">Creada:</dt>
+                    <dd class="col-7">
+                      <small class="text-muted">{{ materia.fecha_creacion|date:"d/m/Y H:i" }}</small>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+
+              {% if materia.descripcion %}
+              <hr />
+              <h6><i class="fas fa-align-left"></i> Descripción:</h6>
+              <p class="text-justify">{{ materia.descripcion|linebreaks }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel de Cupo e Inscripciones -->
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-header">
+              <h5><i class="fas fa-users"></i> Cupo e Inscripciones</h5>
+            </div>
+            <div class="card-body text-center">
+              <div class="mb-3">
+                <h3 class="display-6">
+                  {{ materia.get_inscriptos_count }} / {{ materia.cupo_maximo }}
+                </h3>
+                <p class="text-muted">Inscriptos / Cupo Total</p>
+              </div>
+
+              {% with estado=materia.get_estado_cupo %}
+              <div class="mb-3">
+                <span class="badge bg-{{ estado.clase }} fs-6 px-3 py-2">
+                  {{ estado.texto }}
+                </span>
+              </div>
+              {% endwith %}
+
+              <!-- Barra de progreso -->
+              <div class="progress mb-3" style="height: 10px">
+                {% widthratio materia.get_inscriptos_count materia.cupo_maximo 100 as porcentaje_real %}
+                <div
+                  class="progress-bar {% if porcentaje_real >= 100 %}bg-danger {% elif porcentaje_real >= 80 %}bg-warning {% else %}bg-success{% endif %}"
+                  style="width: {{ porcentaje_real }}%"></div>
+              </div>
+
+              <div class="mb-3">
+                <small class="text-muted">
+                  {% widthratio materia.get_inscriptos_count materia.cupo_maximo 100 as porcentaje_ocupado %}
+                  {{ porcentaje_ocupado }}% ocupado
+                </small>
+              </div>
+
+              {% if user.is_authenticated and user.rol == 'alumno' and materia.activa %}
+              {% if ya_inscrito %}
+              <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> Ya estás inscrito en esta materia.
+              </div>
+              {% elif puede_inscribirse %}
+              {% if materia.tiene_cupo_disponible %}
+              <a href="{% url 'inscripciones:inscribirse' materia.pk %}" class="btn btn-success btn-lg w-100">
+                <i class="fas fa-user-plus me-2"></i>Inscribirse a esta Materia
+              </a>
+              {% else %}
+              <button class="btn btn-danger btn-lg w-100" disabled>
+                <i class="fas fa-times me-2"></i>Sin Cupo Disponible
+              </button>
+              {% endif %}
+              {% else %}
+              <div class="alert alert-warning">
+                <i class="fas fa-lock"></i> No puedes inscribirte a esta materia porque no estás inscripto en la carrera
+                <strong>{{ materia.carrera.nombre }}</strong>.
+              </div>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Información Adicional -->
+          <div class="card mt-3">
+            <div class="card-header">
+              <h6><i class="fas fa-chart-bar"></i> Estadísticas</h6>
+            </div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-6">
+                  <h5 class="text-primary">
+                    {{ materia.get_inscriptos_count }}
+                  </h5>
+                  <small class="text-muted">Inscriptos</small>
+                </div>
+                <div class="col-6">
+                  <h5 class="text-success">
+                    {{ materia.get_cupo_disponible }}
+                  </h5>
+                  <small class="text-muted">Disponible</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Listado de Inscriptos (para administradores y docentes) -->
+      {% if puede_ver_inscripciones and inscripciones %}
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5><i class="fas fa-list"></i> Alumnos Inscriptos</h5>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Legajo</th>
+                      <th>Alumno</th>
+                      <th>DNI</th>
+                      <th>Email</th>
+                      <th>Fecha Inscripción</th>
+                      <th>Estado</th>
+                      <th>Nota Final</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for inscripcion in inscripciones %}
+                    <tr>
+                      <td>
+                        <a href="{% url 'alumnos:detalle' inscripcion.alumno.pk %}">
+                          {{ inscripcion.alumno.numero_legajo }}
+                        </a>
+                      </td>
+                      <td>
+                        {{ inscripcion.alumno.apellido }}, {{ inscripcion.alumno.nombre }}
+                      </td>
+                      <td>{{ inscripcion.alumno.dni }}</td>
+                      <td>{{ inscripcion.alumno.email }}</td>
+                      <td>{{ inscripcion.fecha_inscripcion|date:"d/m/Y" }}</td>
+                      <td>
+                        {% if inscripcion.activa %}
+                        <span class="badge bg-success">{{ inscripcion.get_estado_display }}</span>
+                        {% else %}
+                        <span class="badge bg-danger">{{ inscripcion.get_estado_display }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if inscripcion.nota_final %}
+                        <span class="badge bg-primary">{{ inscripcion.nota_final }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_css %}
+<style>
+  .progress {
+    border-radius: 10px;
+  }
+
+  .display-6 {
+    font-weight: 600;
+  }
+</style>
+{% endblock %}

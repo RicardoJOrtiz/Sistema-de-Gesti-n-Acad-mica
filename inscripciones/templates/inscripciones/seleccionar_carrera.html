@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Seleccionar Carrera{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="mb-4">
+        <i class="fas fa-graduation-cap"></i> Mis Carreras
+      </h2>
+
+      {% if carreras %}
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> 
+        Selecciona una de tus carreras para ver las materias disponibles para inscripción.
+      </div>
+
+      <div class="row">
+        {% for carrera in carreras %}
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-graduation-cap"></i> {{ carrera.nombre }}
+              </h5>
+            </div>
+            <div class="card-body">
+              <p class="card-text text-muted">
+                {{ carrera.descripcion|truncatechars:100 }}
+              </p>
+              <dl class="row mb-0">
+                <dt class="col-6">Duración:</dt>
+                <dd class="col-6">{{ carrera.duracion_anios }} años</dd>
+                <dt class="col-6">Materias totales:</dt>
+                <dd class="col-6">{{ carrera.materias.count }}</dd>
+              </dl>
+            </div>
+            <div class="card-footer bg-transparent">
+              <a 
+                href="{% url 'materias:por_carrera' carrera.pk %}" 
+                class="btn btn-primary w-100"
+              >
+                <i class="fas fa-book"></i> Ver Materias
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if todas_carreras %}
+      <hr class="my-5">
+      
+      <h3 class="mb-3">
+        <i class="fas fa-info-circle"></i> Otras Carreras (Solo Información)
+      </h3>
+      
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> 
+        No puedes inscribirte a materias de estas carreras porque no estás inscripto en ellas. 
+        Contacta a la administración si deseas inscribirte.
+      </div>
+
+      <div class="row">
+        {% for carrera in todas_carreras %}
+          {% if carrera not in carreras %}
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm opacity-75">
+              <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                  <i class="fas fa-graduation-cap"></i> {{ carrera.nombre }}
+                </h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text text-muted">
+                  {{ carrera.descripcion|truncatechars:100 }}
+                </p>
+                <dl class="row mb-0">
+                  <dt class="col-6">Duración:</dt>
+                  <dd class="col-6">{{ carrera.duracion_anios }} años</dd>
+                  <dt class="col-6">Materias totales:</dt>
+                  <dd class="col-6">{{ carrera.materias.count }}</dd>
+                </dl>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a 
+                  href="{% url 'carreras:detalle' carrera.pk %}" 
+                  class="btn btn-outline-secondary w-100"
+                >
+                  <i class="fas fa-info-circle"></i> Ver Información
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> 
+        No estás inscripto en ninguna carrera. Contacta a la administración para inscribirte.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

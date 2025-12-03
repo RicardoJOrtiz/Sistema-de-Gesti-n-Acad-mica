@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Gestión Académica{% endblock %}</title>
+
+    {% load django_bootstrap5 %} {% bootstrap_css %} {% bootstrap_javascript %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}" />
+
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+      <div class="container">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <a class="navbar-brand ms-2 ms-lg-0" href="/">
+          <i class="fas fa-graduation-cap me-2"></i>
+          <span class="d-none d-sm-inline">Sistema de Gestión Académica</span>
+        </a>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            {% if user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link" href="/">Inicio</a>
+            </li>
+
+            {% if user.rol == 'administrador' %}
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+              >
+                Gestión
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a class="dropdown-item" href="{% url 'usuarios:lista' %}"
+                    >Usuarios</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'carreras:lista' %}"
+                    >Carreras</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'materias:lista' %}"
+                    >Materias</a
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{% url 'inscripciones:lista' %}"
+                    >Inscripciones</a
+                  >
+                </li>
+              </ul>
+            </li>
+            {% elif user.rol == 'alumno' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'carreras:lista' %}"
+                >Oferta Académica</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="{% url 'inscripciones:mis_inscripciones' %}"
+                >Mis Materias</a
+              >
+            </li>
+            {% elif user.rol == 'preceptor' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inscripciones:lista' %}">
+                <i class="fas fa-clipboard-list me-1"></i>Inscripciones
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'alumnos:lista' %}">
+                <i class="fas fa-users me-1"></i>Alumnos
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'usuarios:lista_docentes' %}">
+                <i class="fas fa-chalkboard-teacher me-1"></i>Docentes
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'carreras:lista' %}">
+                <i class="fas fa-graduation-cap me-1"></i>Carreras
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'materias:lista' %}">
+                <i class="fas fa-book me-1"></i>Materias
+              </a>
+            </li>
+            {% elif user.rol == 'docente' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'materias:mis_materias_docente' %}">
+                <i class="fas fa-chalkboard-teacher me-1"></i>Mis Materias
+              </a>
+            </li>
+            {% elif user.rol == 'invitado' %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'carreras:lista' %}">Carreras</a>
+            </li>
+            {% endif %} {% endif %}
+          </ul>
+
+          <ul class="navbar-nav">
+            {% if user.is_authenticated %}
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+              >
+                <i class="fas fa-user"></i> {{user.get_full_name|default:user.username }}
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a class="dropdown-item" href="{% url 'usuarios:perfil' %}"
+                    >Mi Perfil</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item"
+                    href="{% url 'usuarios:cambiar_password' %}"
+                    >Cambiar Contraseña</a
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'usuarios:logout' %}"
+                    >Cerrar Sesión</a
+                  >
+                </li>
+              </ul>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'usuarios:login' %}"
+                >Iniciar Sesión</a
+              >
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Mensajes -->
+    {% if messages %}
+    <div class="container mt-3">
+      {% for message in messages %}
+      <div
+        class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Contenido principal -->
+    <main class="container mt-4">{% block content %}{% endblock %}</main>
+
+    <!-- Modal de Advertencia de Sesión -->
+    {% if user.is_authenticated %}
+    <div class="modal fade" id="sessionWarningModal" tabindex="-1" aria-labelledby="sessionWarningLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title" id="sessionWarningLabel">
+              <i class="fas fa-exclamation-triangle me-2"></i>Sesión por Expirar
+            </h5>
+          </div>
+          <div class="modal-body">
+            <p class="mb-2">Tu sesión está por expirar por inactividad.</p>
+            <p class="mb-0">
+              <strong>Tiempo restante: <span id="sessionTimer" class="text-danger">5:00</span></strong>
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="extendSession">
+              <i class="fas fa-redo me-1"></i>Continuar Sesión
+            </button>
+            <a href="{% url 'usuarios:logout' %}" class="btn btn-secondary">
+              <i class="fas fa-sign-out-alt me-1"></i>Cerrar Sesión
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="bg-light text-center text-muted py-4 mt-5">
+      <div class="container">
+        <p>
+          &copy; 2025 Centro Regional Universitario Ituzaingó - Desarrollado por Ortiz Ricardo.
+        </p>
+      </div>
+    </footer>
+
+    {% if user.is_authenticated %}
+    <script>
+      // Script de gestión de sesión
+      let sessionTimeout = {{ request.session_timeout|default:1800 }}; // Tiempo en segundos
+      let warningTime = 300; // Advertir 5 minutos antes
+      let warningShown = false;
+      let countdownInterval = null;
+      let lastActivity = Date.now();
+
+      // Actualizar último tiempo de actividad
+      function updateActivity() {
+        lastActivity = Date.now();
+        sessionTimeout = {{ request.session_timeout|default:1800 }};
+        warningShown = false;
+        
+        // Cerrar modal si está abierto
+        const modal = bootstrap.Modal.getInstance(document.getElementById('sessionWarningModal'));
+        if (modal) {
+          modal.hide();
+        }
+        
+        // Limpiar intervalo si existe
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+      }
+
+      // Mostrar advertencia
+      function showWarning() {
+        if (!warningShown) {
+          warningShown = true;
+          const modal = new bootstrap.Modal(document.getElementById('sessionWarningModal'));
+          modal.show();
+          
+          // Iniciar cuenta regresiva
+          let remainingTime = warningTime;
+          updateTimerDisplay(remainingTime);
+          
+          countdownInterval = setInterval(() => {
+            remainingTime--;
+            updateTimerDisplay(remainingTime);
+            
+            if (remainingTime <= 0) {
+              clearInterval(countdownInterval);
+              window.location.href = "{% url 'usuarios:logout' %}";
+            }
+          }, 1000);
+        }
+      }
+
+      // Actualizar display del temporizador
+      function updateTimerDisplay(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('sessionTimer').textContent = 
+          `${minutes}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      // Verificar timeout periódicamente
+      setInterval(() => {
+        const elapsed = Math.floor((Date.now() - lastActivity) / 1000);
+        const remaining = sessionTimeout - elapsed;
+        
+        if (remaining <= warningTime && remaining > 0) {
+          showWarning();
+        } else if (remaining <= 0) {
+          window.location.href = "{% url 'usuarios:logout' %}";
+        }
+      }, 1000);
+
+      // Detectar actividad del usuario
+      ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+        document.addEventListener(event, updateActivity, true);
+      });
+
+      // Botón para extender sesión
+      document.getElementById('extendSession').addEventListener('click', () => {
+        updateActivity();
+        location.reload(); // Recargar para resetear sesión en servidor
+      });
+    </script>
+    {% endif %}
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

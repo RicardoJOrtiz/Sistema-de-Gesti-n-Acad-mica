@@ -1,0 +1,90 @@
+{% extends 'base.html' %} 
+
+{% block title %}Editar Perfil Extendido{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-user-edit"></i> Editar Perfil Extendido</h2>
+  <a href="{% url 'usuarios:perfil' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver al Perfil
+  </a>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5>
+          <i class="fas fa-user-edit"></i> Información Adicional del Perfil
+        </h5>
+      </div>
+      <div class="card-body">
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          <h6><i class="fas fa-exclamation-triangle"></i> Errores:</h6>
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="{{ form.biografia.id_for_label }}" class="form-label"
+              >Biografía:</label
+            >
+            {{ form.biografia }} {% if form.biografia.errors %}
+            <div class="text-danger">{{ form.biografia.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.sitio_web.id_for_label }}" class="form-label"
+              >Sitio Web:</label
+            >
+            {{ form.sitio_web }} {% if form.sitio_web.errors %}
+            <div class="text-danger">{{ form.sitio_web.errors }}</div>
+            {% endif %}
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+            <a href="{% url 'usuarios:perfil' %}" class="btn btn-secondary">
+              <i class="fas fa-times"></i> Cancelar
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fas fa-info-circle"></i> Información</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">
+          Esta sección te permite agregar información adicional a tu perfil que
+          complementa los datos básicos.
+        </p>
+
+        <hr />
+
+        <p><strong>Campos disponibles:</strong></p>
+        <ul class="text-muted">
+          <li>Biografía personal</li>
+          <li>Sitio web o portafolio</li>
+        </ul>
+
+        <p class="text-muted">
+          Todos los campos son opcionales y puedes actualizarlos cuando desees.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

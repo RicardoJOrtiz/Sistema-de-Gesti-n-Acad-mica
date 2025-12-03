@@ -1,0 +1,362 @@
+{% extends 'base.html' %}{% block title %}Inicio - Gestión Académica{%endblock%} {% block content %}
+
+<div class="row">
+  <div class="col-12">
+    <div class="jumbotron bg-primary text-white rounded p-3 p-md-5 mb-4">
+      <div class="container-fluid py-2">
+        <h1 class="display-6 display-md-5 fw-bold">Sistema de Gestión Académica</h1>
+        <p class="lead">
+          Centro Regional Universitario Ituzaingó
+        </p>
+
+        {% if not user.is_authenticated %}
+        <a
+          class="btn btn-light btn-lg"
+          href="{% url 'usuarios:login' %}"
+          role="button"
+        >
+          <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="row">
+  <div class="col-12">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-user me-2"></i>
+          Bienvenido, {{ user.get_full_name|default:user.username }}
+        </h5>
+      </div>
+      <div class="card-body">
+        <p class="card-text">
+          <span class="badge bg-{{ user.get_rol_display_color }} me-2"
+            >{{ user.get_rol_display }}</span
+          >
+          Tu último acceso fue el {{ user.last_login|date:"d/m/Y H:i" }}
+        </p>
+
+        {% if user.debe_cambiar_password %}
+        <div class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Debes cambiar tu contraseña.
+          <a href="{% url 'usuarios:cambiar_password' %}" class="alert-link"
+            >Cambiar ahora</a
+          >
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Accesos rápidos según el rol -->
+<div class="row">
+  {% if user.rol == 'administrador' %}
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-users fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Usuarios</h5>
+        <p class="card-text mb-auto">Gestionar usuarios del sistema</p>
+        <a href="{% url 'usuarios:lista' %}" class="btn btn-primary mt-3">
+          Administrar Usuarios
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-graduation-cap fa-3x text-success mb-3"></i>
+        <h5 class="card-title">Carreras</h5>
+        <p class="card-text mb-auto">Administrar carreras académicas</p>
+        <a href="{% url 'carreras:lista' %}" class="btn btn-success mt-3">
+          Gestionar Carreras
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-book fa-3x text-info mb-3"></i>
+        <h5 class="card-title">Materias</h5>
+        <p class="card-text mb-auto">Gestionar materias y cupos</p>
+        <a href="{% url 'materias:lista' %}" class="btn btn-info mt-3">
+          Administrar Materias
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-user-graduate fa-3x text-warning mb-3"></i>
+        <h5 class="card-title">Alumnos</h5>
+        <p class="card-text mb-auto">Ver alumnos</p>
+        <a href="{% url 'alumnos:lista' %}" class="btn btn-warning mt-3">
+           Alumnos
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-clipboard-list fa-3x text-secondary mb-3"></i>
+        <h5 class="card-title">Inscripciones</h5>
+        <p class="card-text mb-auto">Gestionar inscripciones</p>
+        <a href="{% url 'inscripciones:lista' %}" class="btn btn-secondary mt-3">
+          Ver Inscripciones
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-chalkboard-teacher fa-3x text-dark mb-3"></i>
+        <h5 class="card-title">Docentes</h5>
+        <p class="card-text mb-auto">Ver listado de docentes</p>
+        <a href="{% url 'usuarios:lista_docentes' %}" class="btn btn-dark mt-3">
+          Ver Docentes
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-user-tie fa-3x text-white mb-3"></i>
+        <h5 class="card-title">Preceptores</h5>
+        <p class="card-text mb-auto">Ver listado de preceptores</p>
+        <a href="{% url 'usuarios:lista_preceptores' %}" class="btn btn-purple mt-3">
+          Ver Preceptores
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-eye fa-3x text-danger mb-3"></i>
+        <h5 class="card-title">Invitados</h5>
+        <p class="card-text mb-auto">Ver listado de invitados</p>
+        <a href="{% url 'usuarios:lista_invitados' %}" class="btn btn-danger mt-3">
+          Ver Invitados
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% elif user.rol == 'alumno' %}
+  <div class="col-sm-6 col-lg-4 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-list-alt fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Oferta Académica</h5>
+        <p class="card-text mb-auto">Ver carreras y materias disponibles</p>
+        <a href="{% url 'carreras:lista' %}" class="btn btn-primary btn-lg mt-3">
+          <i class="fas fa-search me-2"></i>Explorar Oferta Académica
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-clipboard-list fa-3x text-success mb-3"></i>
+        <h5 class="card-title">Mis Materias</h5>
+        <p class="card-text mb-auto">Gestionar mis inscripciones</p>
+        <a href="{% url 'inscripciones:mis_inscripciones' %}" class="btn btn-success btn-lg mt-3">
+          <i class="fas fa-clipboard-check me-2"></i>Ver Mis Inscripciones
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-user-circle fa-3x text-info mb-3"></i>
+        <h5 class="card-title">Mi Perfil</h5>
+        <p class="card-text mb-auto">Ver y editar mi información</p>
+        <a href="{% url 'usuarios:perfil' %}" class="btn btn-info btn-lg mt-3">
+          <i class="fas fa-id-card me-2"></i>Editar Mi Perfil
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% elif user.rol == 'docente' %}
+  <div class="col-md-6 offset-md-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-chalkboard-teacher fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Mis Materias</h5>
+        <p class="card-text mb-auto">Ver materias asignadas y alumnos inscriptos</p>
+        <a href="{% url 'materias:mis_materias_docente' %}" class="btn btn-primary btn-lg mt-3">
+          <i class="fas fa-book me-2"></i>Ver Mis Materias
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% elif user.rol == 'preceptor' %}
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-clipboard-list fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Inscripciones</h5>
+        <p class="card-text mb-auto">Gestionar inscripciones de alumnos</p>
+        <a href="{% url 'inscripciones:lista' %}" class="btn btn-primary mt-3">
+          <i class="fas fa-clipboard-list me-1"></i>Ver Inscripciones
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-users fa-3x text-success mb-3"></i>
+        <h5 class="card-title">Alumnos</h5>
+        <p class="card-text mb-auto">Ver listado de alumnos</p>
+        <a href="{% url 'alumnos:lista' %}" class="btn btn-success mt-3">
+          <i class="fas fa-users me-1"></i>Ver Alumnos
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-chalkboard-teacher fa-3x text-info mb-3"></i>
+        <h5 class="card-title">Docentes</h5>
+        <p class="card-text mb-auto">Consultar lista de docentes</p>
+        <a href="{% url 'usuarios:lista_docentes' %}" class="btn btn-info mt-3">
+          <i class="fas fa-chalkboard-teacher me-1"></i>Ver Docentes
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-graduation-cap fa-3x text-warning mb-3"></i>
+        <h5 class="card-title">Carreras</h5>
+        <p class="card-text mb-auto">Ver carreras disponibles</p>
+        <a href="{% url 'carreras:lista' %}" class="btn btn-warning mt-3">
+          <i class="fas fa-graduation-cap me-1"></i>Ver Carreras
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-md-4 col-lg-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body d-flex flex-column">
+        <i class="fas fa-book fa-3x text-danger mb-3"></i>
+        <h5 class="card-title">Materias</h5>
+        <p class="card-text mb-auto">Consultar materias por carrera</p>
+        <a href="{% url 'materias:lista' %}" class="btn btn-danger mt-3">
+          <i class="fas fa-book me-1"></i>Ver Materias
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="col-md-6 offset-md-3 mb-3">
+    <div class="card text-center h-100">
+      <div class="card-body">
+        <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Carreras</h5>
+        <p class="card-text">Explorar las carreras disponibles</p>
+        <a href="{% url 'carreras:lista' %}" class="btn btn-primary"
+          >Ver Carreras</a
+        >
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% else %}
+<!-- Información para usuarios no autenticados -->
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fas fa-info-circle me-2"></i>Acerca del Sistema</h5>
+      </div>
+      <div class="card-body">
+        <p>
+          Este sistema permite la gestión integral de actividades académicas,
+          incluyendo:
+        </p>
+        <ul>
+          <li>Administración de carreras y materias</li>
+          <li>Gestión de alumnos e inscripciones</li>
+          <li>Control de cupos y disponibilidad</li>
+          <li>Seguimiento académico</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <h5><i class="fas fa-phone me-2"></i>Contacto</h5>
+      </div>
+      <div class="card-body">
+        <p class="mb-1">Centro Regional Universitario Ituzaingó</p>
+        
+        <hr />
+        
+        <p class="mb-2">
+          <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+          <strong>Sede Central:</strong> Av. Ratti y Thorne
+        </p>
+        
+        <p class="mb-2">
+          <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+          <strong>Sede Sur:</strong> Los Pozos y Gelpi
+        </p>
+        
+        <p class="mb-2">
+          <i class="fas fa-phone me-2 text-success"></i>
+          <strong>Tel:</strong> 2120-5700 / 11 6926 1388
+        </p>
+        
+        <p class="mb-3">
+          <i class="fas fa-clock me-2 text-info"></i>
+          <strong>Horarios:</strong> Lun-Vie 07:00-22:00 | Sáb 09:00-13:00
+        </p>
+        
+        <p class="mb-0 text-muted small">
+          <i class="fas fa-info-circle me-2"></i>
+          Para obtener acceso al sistema, contacte con la administración.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %} {% endblock %}

@@ -1,0 +1,10 @@
+# Ignorar todos los templates HTML de Django
+**/templates/**/*.html
+*.html
+
+# Ignorar archivos de Python
+*.py
+
+# Mantener solo archivos específicos si es necesario
+# !static/**/*.css
+# !static/**/*.js

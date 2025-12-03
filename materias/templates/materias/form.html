@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if form.instance.pk %}Editar Materia{% else %}Nueva Materia{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0 fw-bold">
+            {% if form.instance.pk %}
+            <i class="fas fa-edit"></i> Editar Materia: {{ form.instance.nombre }}
+            {% else %}
+            <i class="fas fa-plus"></i> Nueva Materia
+            {% endif %}
+          </h3>
+        </div>
+
+        <form method="post" novalidate id="materiaForm">
+          {% csrf_token %}
+
+          <div class="card-body">
+            <!-- Nombre de la Materia -->
+            <div class="row">
+              <div class="col-12">
+                <div class="mb-3">
+                  <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                    {{ form.nombre.label }} <span class="text-danger">*</span>
+                  </label>
+                  {{ form.nombre }}
+                  {% if form.nombre.errors %}
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.nombre.errors %}
+                    {{ error }}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Carrera, Carga Horaria y Cupo Máximo en una fila -->
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="{{ form.carrera.id_for_label }}" class="form-label">
+                    {{ form.carrera.label }} <span class="text-danger">*</span>
+                  </label>
+                  {{ form.carrera }}
+                  {% if form.carrera.errors %}
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.carrera.errors %}
+                    {{ error }}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="{{ form.carga_horaria.id_for_label }}" class="form-label">
+                    {{ form.carga_horaria.label }}
+                    <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    {{ form.carga_horaria }}
+                    <span class="input-group-text">horas</span>
+                  </div>
+                  {% if form.carga_horaria.errors %}
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.carga_horaria.errors %} {{ error }}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <label for="{{ form.cupo_maximo.id_for_label }}" class="form-label">
+                    {{ form.cupo_maximo.label }}
+                    <span class="text-danger">*</span>
+                  </label>
+                  <div class="input-group">
+                    {{ form.cupo_maximo }}
+                    <span class="input-group-text">
+                      <i class="fas fa-users"></i>
+                    </span>
+                  </div>
+                  {% if form.cupo_maximo.errors %}
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.cupo_maximo.errors %} {{ error }}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Año y Modalidad -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="{{ form.anio_cursado.id_for_label }}" class="form-label">
+                    {{ form.anio_cursado.label }}
+                    <span class="text-danger">*</span>
+                  </label>
+                  {{ form.anio_cursado }} {% if form.anio_cursado.errors %}
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.anio_cursado.errors %} {{ error }}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="{{ form.cuatrimestre.id_for_label }}" class="form-label">
+                    {{ form.cuatrimestre.label }}
+                    <span class="text-danger">*</span>
+                  </label>
+                  {{ form.cuatrimestre }} {% if form.cuatrimestre.errors %}
+                  <div class="invalid-feedback d-block">
+                    {% for error in form.cuatrimestre.errors %} {{ error }}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Descripción -->
+            <div class="mb-3">
+              <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                {{ form.descripcion.label }}
+              </label>
+              {{ form.descripcion }}
+              {% if form.descripcion.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.descripcion.errors %}
+                {{ error }}
+                {% endfor %}
+              </div>
+              {% endif %}
+              <div class="form-text">
+                Descripción detallada de la materia, contenidos y objetivos
+              </div>
+            </div>
+
+            <!-- Estado -->
+            <div class="mb-3">
+              <div class="form-check">
+                {{ form.activa }}
+                <label class="form-check-label" for="{{ form.activa.id_for_label }}">
+                  {{ form.activa.label }}
+                </label>
+              </div>
+              {% if form.activa.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.activa.errors %} {{ error }} {% endfor %}
+              </div>
+              {% endif %}
+              <div class="form-text">
+                Las materias inactivas no aparecerán en las inscripciones
+              </div>
+            </div>
+
+            <!-- Advertencia para edición -->
+            {% if form.instance.pk and form.instance.get_inscriptos_count > 0 %}
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              <strong>Atención:</strong> Esta materia tiene {{ form.instance.get_inscriptos_count }} alumno{{ form.instance.get_inscriptos_count|pluralize:"s" }} inscripto{{ form.instance.get_inscriptos_count|pluralize:"s" }}. Los cambios pueden afectar a las inscripciones existentes.
+            </div>
+            {% endif %}
+
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              <strong>Importante:</strong> Los campos marcados con <span class="text-danger">*</span> son obligatorios y
+              deben completarse para crear la materia.
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="d-flex justify-content-between">
+              <div>
+                <a href="{% url 'materias:lista' %}"
+                  class="btn btn-secondary">
+                  <i class="fas fa-times"></i> Cancelar
+                </a>
+              </div>
+              <div>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i>
+                  {% if form.instance.pk %}Actualizar Materia{% else %}Crear
+                  Materia{% endif %}
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de errores -->
+<div class="modal fade" id="modalErrores" tabindex="-1" aria-labelledby="modalErroresLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="modalErroresLabel">
+          <i class="fas fa-exclamation-circle me-2"></i>Errores en el formulario
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2"><strong>Por favor, corrige los siguientes errores:</strong></p>
+        <ul id="listaErrores" class="mb-0 text-start"></ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+          <i class="fas fa-check me-1"></i>Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Agregar clases de Bootstrap a los campos del formulario
+    const formFields = document.querySelectorAll("input, select, textarea");
+    formFields.forEach(function (field) {
+      if (!field.classList.contains("form-check-input")) {
+        field.classList.add("form-control");
+      }
+    });
+
+    // Validación en tiempo real
+    formFields.forEach(function (field) {
+      field.addEventListener("input", function () {
+        if (this.checkValidity()) {
+          this.classList.remove("is-invalid");
+          this.classList.add("is-valid");
+        } else {
+          this.classList.remove("is-valid");
+          this.classList.add("is-invalid");
+        }
+      });
+    });
+
+    // Mostrar errores del servidor en modal
+    {% if form.errors or form.non_field_errors %}
+    const listaErrores = document.getElementById('listaErrores');
+    listaErrores.innerHTML = '';
+
+    {% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+    listaErrores.innerHTML += '<li>{{ error|escapejs }}</li>';
+    {% endfor %}
+    {% endif %}
+
+    // Mostrar TODOS los errores de cada campo
+    {% for field in form %}
+    {% if field.errors %}
+    {% for error in field.errors %}
+    listaErrores.innerHTML += '<li><strong>{{ field.label }}:</strong> {{ error|escapejs }}</li>';
+    {% endfor %}
+    {% endif %}
+    {% endfor %}
+
+    const modal = new bootstrap.Modal(document.getElementById('modalErrores'));
+    modal.show();
+    {% endif %}
+  });
+</script>
+{% endblock %}

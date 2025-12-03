@@ -1,0 +1,38 @@
+{% extends 'base.html' %} 
+
+{% block title %}Sesión Cerrada{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-body text-center">
+        <div class="mb-4">
+          <i class="fas fa-sign-out-alt fa-4x text-success"></i>
+        </div>
+        <h3 class="card-title">¡Hasta pronto!</h3>
+        <p class="card-text text-muted mb-4">
+          Has cerrado sesión exitosamente en el Sistema de Gestión Académica.
+        </p>
+        <div class="d-grid gap-2">
+          <a href="{% url 'usuarios:login' %}" class="btn btn-primary">
+            <i class="fas fa-sign-in-alt"></i> Iniciar Sesión Nuevamente
+          </a>
+          <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-home"></i> Ir al Inicio
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-3">
+      <small class="text-muted">
+        <i class="fas fa-shield-alt"></i>
+        Por tu seguridad, cierra completamente el navegador si estás en una
+        computadora compartida.
+      </small>
+    </div>
+  </div>
+</div>
+{% endblock %}

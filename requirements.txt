@@ -1,0 +1,5 @@
+Django==5.2.6
+django-bootstrap5==25.2
+python-decouple==3.8
+unidecode==1.4.0
+Pillow==11.3.0

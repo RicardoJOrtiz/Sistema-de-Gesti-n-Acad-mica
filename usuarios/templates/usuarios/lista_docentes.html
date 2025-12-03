@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Docentes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-chalkboard-teacher me-2"></i>Lista de Docentes</h2>
+</div>
+
+<!-- Buscador -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <div class="col-md-10">
+        <input
+          type="text"
+          name="buscar"
+          class="form-control"
+          placeholder="Buscar por nombre, apellido, DNI o email..."
+          value="{{ buscar }}"
+        />
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fas fa-search me-1"></i>Buscar
+        </button>
+      </div>
+      {% if buscar %}
+      <div class="col-12">
+        <a href="{% url 'usuarios:lista_docentes' %}" class="btn btn-sm btn-secondary">
+          <i class="fas fa-times me-1"></i>Limpiar filtros
+        </a>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Tabla de Docentes -->
+{% if docentes %}
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Nombre</th>
+            <th>DNI</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Materias Asignadas</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for docente in docentes %}
+          <tr>
+            <td>
+              <strong>{{ docente.get_full_name }}</strong>
+            </td>
+            <td>{{ docente.dni|default:"-" }}</td>
+            <td>{{ docente.email }}</td>
+            <td>{{ docente.telefono|default:"-" }}</td>
+            <td>
+              {% if docente.is_active %}
+                <span class="badge bg-success">Activo</span>
+              {% else %}
+                <span class="badge bg-danger">Inactivo</span>
+              {% endif %}
+            </td>
+            <td>
+              {% with materias=docente.materias_asignadas.all %}
+                {% if materias %}
+                  <span class="badge bg-info text-dark">{{ materias.count }} materia{{ materias.count|pluralize }}</span>
+                  <div class="small text-muted mt-1">
+                    {% for materia in materias|slice:":3" %}
+                      <div>• {{ materia.nombre }}</div>
+                    {% endfor %}
+                    {% if materias.count > 3 %}
+                      <div class="text-primary">+ {{ materias.count|add:"-3" }} más</div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <span class="text-muted">Sin materias</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Paginación" class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page=1{% if buscar %}&buscar={{ buscar }}{% endif %}">Primera</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if buscar %}&buscar={{ buscar }}{% endif %}">Anterior</a>
+    </li>
+    {% endif %}
+    
+    <li class="page-item active">
+      <span class="page-link">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+    </li>
+    
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if buscar %}&buscar={{ buscar }}{% endif %}">Siguiente</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if buscar %}&buscar={{ buscar }}{% endif %}">Última</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+  <i class="fas fa-info-circle me-2"></i>
+  {% if buscar %}
+    No se encontraron docentes que coincidan con tu búsqueda.
+  {% else %}
+    No hay docentes registrados en el sistema.
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

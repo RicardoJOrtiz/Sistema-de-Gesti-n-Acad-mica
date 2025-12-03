@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Inscripciones{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col">
+    <h1><i class="fas fa-clipboard-list me-2"></i>Gestión de Inscripciones</h1>
+  </div>
+  <div class="col-auto">
+    <a href="{% url 'inscripciones:crear' %}" class="btn btn-primary">
+      <i class="fas fa-plus me-1"></i>Nueva Inscripción
+    </a>
+  </div>
+</div>
+
+{% if inscripciones %}
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Alumno</th>
+            <th>DNI</th>
+            <th>Materia</th>
+            <th>Carrera</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inscripcion in inscripciones %}
+          <tr>
+            <td>
+              <strong>{{ inscripcion.alumno.get_full_name }}</strong>
+            </td>
+            <td>{{ inscripcion.alumno.dni }}</td>
+            <td>{{ inscripcion.materia.nombre }}</td>
+            <td>
+              <small class="text-muted">{{ inscripcion.materia.carrera.nombre }}</small>
+            </td>
+            <td>{{ inscripcion.fecha_inscripcion|date:"d/m/Y" }}</td>
+            <td>
+              {% if inscripcion.activa %}
+              <span class="badge bg-success">Activa</span>
+              {% else %}
+              <span class="badge bg-secondary">Dada de baja</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <a href="{% url 'inscripciones:detalle' inscripcion.pk %}" 
+                   class="btn btn-sm btn-outline-info">
+                  <i class="fas fa-eye me-1"></i>Ver
+                </a>
+                {% if inscripcion.activa %}
+                <button type="button" 
+                        class="btn btn-sm btn-outline-danger"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalBaja{{ inscripcion.pk }}">
+                  <i class="fas fa-times me-1"></i>Dar de Baja
+                </button>
+                {% else %}
+                <button type="button" 
+                        class="btn btn-sm btn-outline-success"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalAlta{{ inscripcion.pk }}">
+                  <i class="fas fa-check me-1"></i>Dar de Alta
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Paginación" class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page=1">Primera</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+    </li>
+    {% endif %}
+    
+    <li class="page-item active">
+      <span class="page-link">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+    </li>
+    
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+  <i class="fas fa-info-circle me-2"></i>
+  No hay inscripciones registradas. <a href="{% url 'inscripciones:crear' %}">Crear la primera inscripción</a>
+</div>
+{% endif %}
+
+<!-- Modales de confirmación -->
+{% for inscripcion in inscripciones %}
+  <!-- Modal para Dar de Baja -->
+  <div class="modal fade" id="modalBaja{{ inscripcion.pk }}" tabindex="-1" aria-labelledby="modalBajaLabel{{ inscripcion.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="modalBajaLabel{{ inscripcion.pk }}">
+            <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Baja de Inscripción
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-3"><strong>¿Está seguro de dar de baja esta inscripción?</strong></p>
+          <div class="alert alert-warning mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Información de la inscripción:</strong>
+          </div>
+          <ul class="list-unstyled ms-3">
+            <li><strong>Alumno:</strong> {{ inscripcion.alumno.get_full_name }}</li>
+            <li><strong>DNI:</strong> {{ inscripcion.alumno.dni }}</li>
+            <li><strong>Materia:</strong> {{ inscripcion.materia.nombre }}</li>
+            <li><strong>Carrera:</strong> {{ inscripcion.materia.carrera.nombre }}</li>
+          </ul>
+          <p class="text-muted small mb-0">Esta acción cambiará el estado de la inscripción a "Dada de baja".</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancelar
+          </button>
+          <form method="post" action="{% url 'inscripciones:dar_baja' inscripcion.pk %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+              <i class="fas fa-check me-1"></i>Confirmar Baja
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Dar de Alta -->
+  <div class="modal fade" id="modalAlta{{ inscripcion.pk }}" tabindex="-1" aria-labelledby="modalAltaLabel{{ inscripcion.pk }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="modalAltaLabel{{ inscripcion.pk }}">
+            <i class="fas fa-check-circle me-2"></i>Confirmar Reactivación de Inscripción
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-3"><strong>¿Está seguro de reactivar esta inscripción?</strong></p>
+          <div class="alert alert-info mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Información de la inscripción:</strong>
+          </div>
+          <ul class="list-unstyled ms-3">
+            <li><strong>Alumno:</strong> {{ inscripcion.alumno.get_full_name }}</li>
+            <li><strong>DNI:</strong> {{ inscripcion.alumno.dni }}</li>
+            <li><strong>Materia:</strong> {{ inscripcion.materia.nombre }}</li>
+            <li><strong>Carrera:</strong> {{ inscripcion.materia.carrera.nombre }}</li>
+            <li><strong>Cupo disponible:</strong> 
+              {% with tiene_cupo=inscripcion.materia.tiene_cupo_disponible %}
+                {% if tiene_cupo %}
+                  <span class="badge bg-success">Sí</span>
+                {% else %}
+                  <span class="badge bg-danger">No</span>
+                {% endif %}
+              {% endwith %}
+            </li>
+          </ul>
+          {% with tiene_cupo=inscripcion.materia.tiene_cupo_disponible %}
+            {% if not tiene_cupo %}
+            <div class="alert alert-danger mb-0">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <strong>Atención:</strong> La materia no tiene cupo disponible. No se podrá reactivar la inscripción.
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0">Esta acción cambiará el estado de la inscripción a "Activa".</p>
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancelar
+          </button>
+          <form method="post" action="{% url 'inscripciones:reactivar' inscripcion.pk %}" style="display:inline;">
+            {% csrf_token %}
+            {% with tiene_cupo=inscripcion.materia.tiene_cupo_disponible %}
+              <button type="submit" class="btn btn-success" {% if not tiene_cupo %}disabled{% endif %}>
+                <i class="fas fa-check me-1"></i>Confirmar Reactivación
+              </button>
+            {% endwith %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

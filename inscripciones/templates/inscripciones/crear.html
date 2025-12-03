@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Nueva Inscripción{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col">
+    <h1><i class="fas fa-plus-circle me-2"></i>Nueva Inscripción</h1>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post" id="inscripcionForm">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+
+      <div id="carreraInfo" class="alert alert-info mt-3" style="display: none;">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Carrera del alumno:</strong> <span id="carreraNombre"></span>
+      </div>
+
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save me-1"></i>Guardar Inscripción
+        </button>
+        <a href="{% url 'inscripciones:lista' %}" class="btn btn-secondary">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const alumnoSelect = document.getElementById('id_alumno');
+    const materiaSelect = document.getElementById('id_materia');
+    const carreraInfo = document.getElementById('carreraInfo');
+    const carreraNombre = document.getElementById('carreraNombre');
+
+    // Al cambiar el alumno, cargar las materias de su carrera
+    alumnoSelect.addEventListener('change', function () {
+      const alumnoId = this.value;
+
+      if (!alumnoId) {
+        materiaSelect.innerHTML = '<option value="">Selecciona un alumno primero</option>';
+        materiaSelect.disabled = true;
+        carreraInfo.style.display = 'none';
+        return;
+      }
+
+      // Mostrar indicador de carga
+      materiaSelect.innerHTML = '<option value="">Cargando materias...</option>';
+      materiaSelect.disabled = true;
+
+      // Hacer petición AJAX
+      fetch(`{% url 'inscripciones:ajax_materias_por_alumno' %}?alumno_id=${alumnoId}`)
+        .then(response => response.json())
+        .then(data => {
+          materiaSelect.innerHTML = '';
+
+          if (data.error) {
+            materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
+            return;
+          }
+
+          if (data.materias.length === 0) {
+            materiaSelect.innerHTML = '<option value="">No hay materias disponibles</option>';
+            carreraInfo.style.display = 'none';
+            return;
+          }
+
+          // Mostrar info de carrera
+          if (data.carrera) {
+            carreraNombre.textContent = data.carrera;
+            carreraInfo.style.display = 'block';
+          }
+
+          // Agregar opción por defecto
+          const defaultOption = document.createElement('option');
+          defaultOption.value = '';
+          defaultOption.textContent = 'Selecciona una materia';
+          materiaSelect.appendChild(defaultOption);
+
+          // Agregar materias agrupadas por año
+          let currentYear = null;
+          data.materias.forEach(materia => {
+            if (currentYear !== materia.anio_cursado) {
+              currentYear = materia.anio_cursado;
+              const optgroup = document.createElement('optgroup');
+              optgroup.label = `${materia.anio_cursado}° Año`;
+              materiaSelect.appendChild(optgroup);
+            }
+
+            const option = document.createElement('option');
+            option.value = materia.id;
+
+            // Formato: código - nombre (cuatrimestre)
+            const cuatrimestre = materia.cuatrimestre === 0 ? 'Anual' :
+              materia.cuatrimestre === 1 ? '1° Cuat' : '2° Cuat';
+            option.textContent = `${materia.codigo} - ${materia.nombre} (${cuatrimestre})`;
+
+            // Agregar al último optgroup
+            const lastOptgroup = materiaSelect.querySelector('optgroup:last-of-type');
+            if (lastOptgroup) {
+              lastOptgroup.appendChild(option);
+            } else {
+              materiaSelect.appendChild(option);
+            }
+          });
+
+          materiaSelect.disabled = false;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
+        });
+    });
+
+    // Deshabilitar materia al inicio si no hay alumno seleccionado
+    if (!alumnoSelect.value) {
+      materiaSelect.disabled = true;
+    }
+  });
+</script>
+{% endblock %}

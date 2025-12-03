@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Inscripciones{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h1 class="h3 h-sm-2 mb-0">
+                        <i class="fas fa-file-signature text-primary"></i> Mis Inscripciones
+                    </h1>
+                    <p class="text-muted mb-0">Materias en las que estás inscripto</p>
+                </div>
+                <a href="{% if carrera_principal %}{% url 'materias:por_carrera' carrera_principal.pk %}{% else %}{% url 'carreras:lista' %}{% endif %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Inscribirme a Materias
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if inscripciones %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" style="font-size: 0.9rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Materia</th>
+                                    <th>Carrera</th>
+                                    <th>Año</th>
+                                    <th>Cuatrimestre</th>
+                                    <th>Carga Horaria</th>
+                                    <th>Fecha Inscripción</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inscripcion in inscripciones %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ inscripcion.materia.nombre }}</strong>
+                                        {% if inscripcion.materia.docente %}
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-chalkboard-teacher"></i> 
+                                            {{ inscripcion.materia.docente.get_full_name }}
+                                        </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ inscripcion.materia.carrera.nombre }}</td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ inscripcion.materia.anio_cursado }}° Año
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">
+                                            {{ inscripcion.materia.get_cuatrimestre_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ inscripcion.materia.carga_horaria }}hs</td>
+                                    <td>{{ inscripcion.fecha_inscripcion|date:"d/m/Y" }}</td>
+                                    <td>
+                                        {% if inscripcion.activa %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle"></i> Activa
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times-circle"></i> Inactiva
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if inscripcion.activa %}
+                                        <button type="button" class="btn btn-danger" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalDesinscribir{{ inscripcion.id }}"
+                                                title="Desinscribirse de esta materia">
+                                            <i class="fas fa-user-minus me-1"></i>Desinscribirse
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-secondary" disabled title="Inscripción inactiva">
+                                            <i class="fas fa-ban me-1"></i>Inactiva
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm bg-light">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle text-info"></i> Resumen
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 class="text-success">{{ inscripciones_activas_count }}</h3>
+                            <p class="text-muted mb-0">Materias Cursando</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-primary">{{ inscripciones|length }}</h3>
+                            <p class="text-muted mb-0">Total Inscripciones</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-info">
+                                {% regroup inscripciones by materia.carrera as carreras_list %}
+                                {{ carreras_list|length }}
+                            </h3>
+                            <p class="text-muted mb-0">Carreras</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle fa-3x mb-3"></i>
+                <h4>No tienes inscripciones activas</h4>
+                <p class="mb-3">Todavía no te has inscripto a ninguna materia.</p>
+                <a href="{% url 'materias:con_cupo' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-search me-2"></i>Ver Materias Disponibles
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modales de confirmación de desinscripción -->
+{% for inscripcion in inscripciones %}
+<div class="modal fade" id="modalDesinscribir{{ inscripcion.id }}" tabindex="-1" aria-labelledby="modalDesinscribirLabel{{ inscripcion.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalDesinscribirLabel{{ inscripcion.id }}">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Desinscripción
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">¿Estás seguro de que deseas desinscribirte de <strong>{{ inscripcion.materia.nombre }}</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <form method="post" action="{% url 'inscripciones:desinscribirse' inscripcion.materia.pk %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-user-minus me-1"></i>Aceptar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

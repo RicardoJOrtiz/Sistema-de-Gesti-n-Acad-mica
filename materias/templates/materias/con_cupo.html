@@ -1,0 +1,209 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Materias con Cupo
+Disponible{% endblock %} {% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2><i class="fas fa-clipboard-check"></i> Materias con Cupo Disponible</h2>
+        </div>
+        <div>
+          <a href="{% url 'materias:lista' %}" class="btn btn-secondary btn-lg">
+            <i class="fas fa-list me-2"></i>Ver Todas las Materias
+          </a>
+        </div>
+      </div>
+
+      {% if materias %}
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        <strong>{{ materias.count }} materia{{ materias.count|pluralize }}</strong>
+        con cupo disponible para inscripciones.
+      </div>
+
+      <div class="row">
+        {% for materia in materias %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+          <div class="card h-100 border-success">
+            <div class="card-header bg-success text-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">{{ materia.carrera.nombre }}</h6>
+                <span class="badge bg-light text-dark"
+                  >{{ materia.codigo }}</span
+                >
+              </div>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">{{ materia.nombre }}</h5>
+
+              <div class="row mb-3">
+                <div class="col-6">
+                  <small class="text-muted">Año/Cuatrimestre</small>
+                  <br /><span class="badge bg-secondary">{{ materia.anio_cursado }}° / {{ materia.get_cuatrimestre_display_short }}</span>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Carga Horaria</small>
+                  <br /><span class="text-primary"><i class="fas fa-clock"></i> {{ materia.carga_horaria }}h</span>
+                </div>
+              </div>
+
+              <!-- Indicador de cupo -->
+              <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <small class="text-muted">Cupo disponible</small>
+                  <strong class="text-success">{{ materia.get_cupo_disponible }} lugares</strong>
+                </div>
+                <div class="progress" style="height: 8px">
+                  {% widthratio materia.get_inscriptos_count materia.cupo_maximo 100 as porcentaje %}
+                  <div class="progress-bar bg-success" style="width: {{ porcentaje }}%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                  <small class="text-muted">{{ materia.get_inscriptos_count }} inscriptos</small>
+                  <small class="text-muted">{{ materia.cupo_maximo }} total</small>
+                </div>
+              </div>
+
+              {% if materia.descripcion %}
+              <p class="card-text">
+                <small class="text-muted">{{ materia.descripcion|truncatewords:15 }}</small>
+              </p>
+              {% endif %}
+            </div>
+            <div class="card-footer bg-transparent">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  {% with estado=materia.get_estado_cupo %}
+                  <span class="badge bg-{{ estado.clase }}">{{ estado.texto }}</span>
+                  {% endwith %}
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                  <a
+                    href="{% url 'materias:detalle' materia.pk %}"
+                    class="btn btn-outline-primary btn-lg"
+                    title="Ver detalles completos de la materia"
+                  >
+                    <i class="fas fa-eye me-1"></i>Ver Detalles
+                  </a>
+                  {% if user.rol == 'alumno' %}
+                  <a
+                    href="{% url 'inscripciones:inscribirse' materia.pk %}"
+                    class="btn btn-success btn-lg"
+                    title="Inscribirme a esta materia"
+                  >
+                    <i class="fas fa-user-plus me-1"></i>Inscribirme
+                  </a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Paginación -->
+      {% if is_paginated %}
+      <nav aria-label="Paginación de materias con cupo">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page=1">Primera</a>
+          </li>
+          <li class="page-item">
+            <a
+              class="page-link"
+              href="?page={{ page_obj.previous_page_number }}"
+              >Anterior</a
+            >
+          </li>
+          {% endif %}
+
+          <li class="page-item active">
+            <span class="page-link">
+              Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+          </li>
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}"
+              >Siguiente</a
+            >
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}"
+              >Última</a
+            >
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %} {% else %}
+      <div class="alert alert-warning text-center">
+        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+        <h5>No hay materias con cupo disponible</h5>
+        <p>
+          En este momento todas las materias activas han alcanzado su cupo
+          máximo.
+        </p>
+        <a href="{% url 'materias:lista' %}" class="btn btn-primary btn-lg">
+          <i class="fas fa-list me-2"></i>Ver Todas las Materias
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Información adicional -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h6>
+                <i class="fas fa-info-circle"></i> Información sobre
+                Inscripciones
+              </h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>Para Alumnos:</h6>
+                  <ul class="list-unstyled">
+                    <li>
+                      <i class="fas fa-check text-success"></i> Solo se muestran
+                      materias con cupo disponible
+                    </li>
+                    <li>
+                      <i class="fas fa-check text-success"></i> Inscripción
+                      directa desde esta vista
+                    </li>
+                    <li>
+                      <i class="fas fa-check text-success"></i> Información en
+                      tiempo real del cupo
+                    </li>
+                  </ul>
+                </div>
+                <div class="col-md-6">
+                  <h6>Estados de Cupo:</h6>
+                  <ul class="list-unstyled">
+                    <li>
+                      <span class="badge bg-success me-2">Disponible</span> Más
+                      de 5 lugares
+                    </li>
+                    <li>
+                      <span class="badge bg-warning me-2">Limitado</span> Entre
+                      1-5 lugares
+                    </li>
+                    <li>
+                      <span class="badge bg-danger me-2">Completo</span> Sin
+                      cupo disponible
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

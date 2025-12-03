@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% if object %}Editar Carrera{% else %}Nueva Carrera{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+    }
+    
+    .form-body {
+        padding: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-custom {
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .field-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        z-index: 10;
+    }
+    
+    .input-with-icon {
+        position: relative;
+    }
+    
+    .input-with-icon .form-control {
+        padding-right: 3rem;
+    }
+    
+    .preview-card {
+        background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 2px dashed #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-container">
+                <!-- Header -->
+                <div class="form-header text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-graduation-cap" style="font-size: 3rem; opacity: 0.8;"></i>
+                    </div>
+                    <h2 class="fw-bold mb-2">{{ titulo }}</h2>
+                    <p class="mb-0 opacity-75">
+                        {% if object %}
+                            Modifica los datos de la carrera existente
+                        {% else %}
+                            Complete la información para crear una nueva carrera
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <!-- Form Body -->
+                <div class="form-body">
+                    <!-- Mostrar errores generales del formulario -->
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Errores del formulario
+                        </h6>
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Mostrar todos los errores de campos -->
+                    {% if form.errors %}
+                    <div class="alert alert-warning" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-exclamation-circle me-2"></i>Por favor, corrige los siguientes errores:
+                        </h6>
+                        <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" id="carreraForm" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Información Básica -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Información Básica
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Nombre -->
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                        <i class="fas fa-tag text-primary me-2"></i>{{ form.nombre.label }}
+                                    </label>
+                                    <div class="input-with-icon">
+                                        {{ form.nombre }}
+                                        <i class="fas fa-graduation-cap field-icon"></i>
+                                    </div>
+                                    {% if form.nombre.help_text %}
+                                    <div class="help-text">{{ form.nombre.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.nombre.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.nombre.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Código -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.codigo.id_for_label }}" class="form-label">
+                                        <i class="fas fa-hashtag text-primary me-2"></i>{{ form.codigo.label }}
+                                    </label>
+                                    <div class="input-with-icon">
+                                        {{ form.codigo }}
+                                        <i class="fas fa-code field-icon"></i>
+                                    </div>
+                                    {% if form.codigo.help_text %}
+                                    <div class="help-text">{{ form.codigo.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.codigo.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.codigo.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Descripción -->
+                        <div class="form-group">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left text-primary me-2"></i>{{ form.descripcion.label }}
+                            </label>
+                            {{ form.descripcion }}
+                            {% if form.descripcion.help_text %}
+                            <div class="help-text">{{ form.descripcion.help_text }}</div>
+                            {% endif %}
+                            {% if form.descripcion.errors %}
+                            <div class="invalid-feedback d-block">{{ form.descripcion.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Configuración Académica -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-cog me-2"></i>Configuración Académica
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Modalidad -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.modalidad.id_for_label }}" class="form-label">
+                                        <i class="fas fa-chalkboard text-success me-2"></i>{{ form.modalidad.label }}
+                                    </label>
+                                    {{ form.modalidad }}
+                                    {% if form.modalidad.help_text %}
+                                    <div class="help-text">{{ form.modalidad.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.modalidad.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.modalidad.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Duración -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.duracion_anios.id_for_label }}" class="form-label">
+                                        <i class="fas fa-clock text-success me-2"></i>{{ form.duracion_anios.label }}
+                                    </label>
+                                    <div class="input-with-icon">
+                                        {{ form.duracion_anios }}
+                                        <i class="fas fa-calendar-alt field-icon"></i>
+                                    </div>
+                                    {% if form.duracion_anios.help_text %}
+                                    <div class="help-text">{{ form.duracion_anios.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.duracion_anios.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.duracion_anios.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Título Otorgado -->
+                        <div class="form-group">
+                            <label for="{{ form.titulo_otorgado.id_for_label }}" class="form-label">
+                                <i class="fas fa-certificate text-success me-2"></i>{{ form.titulo_otorgado.label }}
+                            </label>
+                            <div class="input-with-icon">
+                                {{ form.titulo_otorgado }}
+                                <i class="fas fa-award field-icon"></i>
+                            </div>
+                            {% if form.titulo_otorgado.help_text %}
+                            <div class="help-text">{{ form.titulo_otorgado.help_text }}</div>
+                            {% endif %}
+                            {% if form.titulo_otorgado.errors %}
+                            <div class="invalid-feedback d-block">{{ form.titulo_otorgado.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Estado y Observaciones -->
+                        <div class="row mb-4 mt-4">
+                            <div class="col-12">
+                                <h5 class="fw-bold text-warning border-bottom pb-2 mb-3">
+                                    <i class="fas fa-clipboard-check me-2"></i>Estado
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <!-- Activa -->
+                        <div class="form-group">
+                            <div class="form-check form-switch">
+                                {{ form.activa }}
+                                <label class="form-check-label fw-semibold" for="{{ form.activa.id_for_label }}">
+                                    <i class="fas fa-toggle-on text-warning me-2"></i>{{ form.activa.label }}
+                                </label>
+                            </div>
+                            {% if form.activa.help_text %}
+                            <div class="help-text">{{ form.activa.help_text }}</div>
+                            {% endif %}
+                            {% if form.activa.errors %}
+                            <div class="invalid-feedback d-block">{{ form.activa.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Vista Previa -->
+                        <div class="preview-card mt-4" id="preview" style="display: none;">
+                            <h6 class="fw-bold text-secondary mb-3">
+                                <i class="fas fa-eye me-2"></i>Vista Previa
+                            </h6>
+                            <div id="previewContent"></div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center mt-4 pt-4 border-top gap-2">
+                            <a href="{% url 'carreras:lista' %}" class="btn btn-outline-secondary btn-custom">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            
+                            <div class="d-flex flex-column flex-sm-row gap-2" role="group">
+                                <button type="button" id="previewBtn" class="btn btn-outline-info btn-custom">
+                                    <i class="fas fa-eye me-2"></i>Vista Previa
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-custom">
+                                    <i class="fas fa-save me-2"></i>{{ accion }} Carrera
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('carreraForm');
+    const previewBtn = document.getElementById('previewBtn');
+    const preview = document.getElementById('preview');
+    const previewContent = document.getElementById('previewContent');
+    
+    // Auto-generar código basado en el nombre
+    const nombreField = document.getElementById('{{ form.nombre.id_for_label }}');
+    const codigoField = document.getElementById('{{ form.codigo.id_for_label }}');
+    
+    if (nombreField && codigoField && !codigoField.value) {
+        nombreField.addEventListener('input', function() {
+            const nombre = this.value;
+            const palabras = nombre.split(' ');
+            let codigo = '';
+            
+            // Tomar las primeras letras de cada palabra
+            palabras.forEach(palabra => {
+                if (palabra.length > 0) {
+                    codigo += palabra.charAt(0).toUpperCase();
+                }
+            });
+            
+            codigoField.value = codigo;
+            updatePreview();
+        });
+    }
+    
+    // Vista previa
+    function updatePreview() {
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        const modalidadSelect = document.getElementById('{{ form.modalidad.id_for_label }}');
+        const modalidadText = modalidadSelect.options[modalidadSelect.selectedIndex].text;
+        
+        const previewHtml = `
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        ${data.nombre || 'Nombre de la Carrera'}
+                        <small class="float-end">${data.codigo || 'CÓDIGO'}</small>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">${data.descripcion || 'Descripción de la carrera'}</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="p-2 bg-light rounded">
+                                <small class="text-muted">Título que Otorga:</small><br>
+                                <strong class="text-primary">
+                                    <i class="fas fa-certificate me-1"></i>
+                                    ${data.titulo_otorgado || 'Título por definir'}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Modalidad:</small><br>
+                            <strong>
+                                <i class="fas fa-chalkboard me-1"></i>
+                                ${modalidadText}
+                            </strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Duración:</small><br>
+                            <strong>
+                                <i class="fas fa-clock me-1"></i>
+                                ${data.duracion_anios || '0'} año${data.duracion_anios > 1 ? 's' : ''}
+                            </strong>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                        <span class="badge ${data.activa === 'on' ? 'bg-success' : 'bg-danger'} px-3 py-2">
+                            <i class="fas fa-${data.activa === 'on' ? 'check' : 'times'} me-1"></i>
+                            ${data.activa === 'on' ? 'Carrera Activa' : 'Carrera Inactiva'}
+                        </span>
+                        <small class="text-muted text-nowrap">
+                            <i class="fas fa-calendar me-1"></i>
+                            Fecha: ${new Date().toLocaleDateString('es-ES')}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        previewContent.innerHTML = previewHtml;
+    }
+    
+    previewBtn.addEventListener('click', function() {
+        updatePreview();
+        if (preview.style.display === 'none') {
+            preview.style.display = 'block';
+            previewBtn.innerHTML = '<i class="fas fa-eye-slash me-2"></i>Ocultar Vista Previa';
+        } else {
+            preview.style.display = 'none';
+            previewBtn.innerHTML = '<i class="fas fa-eye me-2"></i>Vista Previa';
+        }
+    });
+    
+    // Actualizar vista previa en tiempo real
+    form.addEventListener('input', updatePreview);
+    form.addEventListener('change', updatePreview);
+    
+    // Validación en tiempo real
+    const inputs = form.querySelectorAll('.form-control, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+    });
+    
+    function validateField(field) {
+        const value = field.value.trim();
+        const isRequired = field.hasAttribute('required');
+        
+        if (isRequired && !value) {
+            field.classList.add('is-invalid');
+            field.classList.remove('is-valid');
+        } else if (value) {
+            field.classList.add('is-valid');
+            field.classList.remove('is-invalid');
+        } else {
+            field.classList.remove('is-valid', 'is-invalid');
+        }
+    }
+    
+    // Animación de entrada
+    const container = document.querySelector('.form-container');
+    container.style.opacity = '0';
+    container.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        container.style.transition = 'all 0.6s ease';
+        container.style.opacity = '1';
+        container.style.transform = 'translateY(0)';
+    }, 100);
+});
+</script>
+{% endblock %}

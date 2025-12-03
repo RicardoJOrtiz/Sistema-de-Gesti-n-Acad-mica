@@ -1,0 +1,169 @@
+{% extends 'base.html' %} 
+{% block title %}
+{{usuario.get_full_name|default:usuario.username }} - Detalle Usuario{% endblock%} 
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-user"></i> Detalle del Usuario</h2>
+  <div>
+    <a href="{% url 'usuarios:editar' usuario.pk %}" class="btn btn-warning">
+      <i class="fas fa-edit"></i> Editar
+    </a>
+    <a href="{% url 'usuarios:lista' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Volver
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fas fa-info-circle"></i> Información Personal</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p>
+              <strong>Nombre:</strong> {{ usuario.first_name|default:"No especificado" }}
+            </p>
+            <p>
+              <strong>Apellido:</strong> {{ usuario.last_name|default:"No especificado" }}
+            </p>
+            <p><strong>Nombre de usuario:</strong> {{ usuario.username }}</p>
+            <p><strong>Email:</strong> {{ usuario.email }}</p>
+            <p><strong>DNI:</strong> {{ usuario.dni }}</p>
+          </div>
+          <div class="col-md-6">
+            <p>
+              <strong>Teléfono:</strong> {{ usuario.telefono|default:"No especificado" }}
+            </p>
+            <p>
+              <strong>Fecha de nacimiento:</strong>
+              {% if usuario.fecha_nacimiento %} 
+              {{usuario.fecha_nacimiento|date:"d/m/Y" }} 
+              {% else %} No especificada {% endif %}
+            </p>
+            <p>
+              <strong>Dirección:</strong> {{ usuario.direccion|default:"No especificada" }}
+            </p>
+            <p>
+              <strong>Rol:</strong>
+              <span class="badge bg-primary">{{ usuario.get_rol_display }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if usuario.direccion or usuario.telefono or usuario.fecha_nacimiento %}
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5><i class="fas fa-map-marker-alt"></i> Información de Contacto</h5>
+      </div>
+      <div class="card-body">
+        {% if usuario.direccion %}
+        <p><strong>Dirección:</strong><br />{{ usuario.direccion }}</p>
+        {% endif %} {% if usuario.telefono %}
+        <p><strong>Teléfono:</strong> {{ usuario.telefono }}</p>
+        {% endif %} {% if usuario.fecha_nacimiento %}
+        <p>
+          <strong>Edad aproximada:</strong>
+          {{ edad|default:"No calculada" }}{% if edad %} años{% endif %}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fas fa-cog"></i> Estado de la Cuenta</h5>
+      </div>
+      <div class="card-body">
+        <p>
+          <strong>Estado:</strong>
+          {% if usuario.is_active %}
+          <span class="badge bg-success">Activo</span>
+          {% else %}
+          <span class="badge bg-danger">Inactivo</span>
+          {% endif %}
+        </p>
+        <p>
+          <strong>Es staff:</strong>
+          {% if usuario.is_staff %}
+          <span class="badge bg-info">Sí</span>
+          {% else %}
+          <span class="badge bg-secondary">No</span>
+          {% endif %}
+        </p>
+        <p>
+          <strong>Es superusuario:</strong>
+          {% if usuario.is_superuser %}
+          <span class="badge bg-danger">Sí</span>
+          {% else %}
+          <span class="badge bg-secondary">No</span>
+          {% endif %}
+        </p>
+        <p>
+          <strong>Debe cambiar contraseña:</strong>
+          {% if usuario.debe_cambiar_password %}
+          <span class="badge bg-warning">Sí</span>
+          {% else %}
+          <span class="badge bg-success">No</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5><i class="fas fa-clock"></i> Actividad</h5>
+      </div>
+      <div class="card-body">
+        <p>
+          <strong>Fecha de registro:</strong><br />
+          {{ usuario.date_joined|date:"d/m/Y H:i" }}
+        </p>
+        <p>
+          <strong>Último acceso:</strong><br />
+          {% if usuario.last_login %} {{ usuario.last_login|date:"d/m/Y H:i" }}
+          {% else %}
+          <span class="text-muted">Nunca ha iniciado sesión</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5><i class="fas fa-tools"></i> Acciones</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a
+            href="{% url 'usuarios:editar' usuario.pk %}"
+            class="btn btn-warning"
+          >
+            <i class="fas fa-edit"></i> Editar Usuario
+          </a>
+          {% if usuario != request.user %}
+          <a
+            href="{% url 'usuarios:eliminar' usuario.pk %}"
+            class="btn btn-danger"
+          >
+            <i class="fas fa-trash"></i> Eliminar Usuario
+          </a>
+          {% endif %}
+          <hr />
+          <a href="{% url 'usuarios:lista' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver a la Lista
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Gestión de Inscripciones - Preceptor{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col">
+    <h1><i class="fas fa-clipboard-list me-2"></i>Gestión de Inscripciones</h1>
+    <p class="text-muted">Panel de visualización para preceptores</p>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Filtros de búsqueda</h5>
+    <form method="get" class="row g-3">
+      <div class="col-md-4">
+        <label for="carrera" class="form-label">Carrera</label>
+        <select name="carrera" id="carrera" class="form-select">
+          <option value="">Todas las carreras</option>
+          {% for carrera in carreras %}
+          <option value="{{ carrera.id }}" {% if request.GET.carrera == carrera.id|stringformat:"s" %}selected{% endif %}>
+            {{ carrera.nombre }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="materia" class="form-label">Materia</label>
+        <select name="materia" id="materia" class="form-select">
+          <option value="">Todas las materias</option>
+          {% for materia in materias %}
+          <option value="{{ materia.id }}" {% if request.GET.materia == materia.id|stringformat:"s" %}selected{% endif %}>
+            {{ materia.nombre }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="estado" class="form-label">Estado</label>
+        <select name="estado" id="estado" class="form-select">
+          <option value="">Todos</option>
+          <option value="activa" {% if request.GET.estado == 'activa' %}selected{% endif %}>Activas</option>
+          <option value="inactiva" {% if request.GET.estado == 'inactiva' %}selected{% endif %}>Dadas de baja</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fas fa-search me-1"></i>Filtrar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Resultados -->
+{% if inscripciones %}
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">
+      Total de inscripciones: {{ page_obj.paginator.count }}
+    </h5>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Alumno</th>
+            <th>DNI</th>
+            <th>Materia</th>
+            <th>Carrera</th>
+            <th>Fecha Inscripción</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inscripcion in inscripciones %}
+          <tr>
+            <td>
+              <strong>{{ inscripcion.alumno.get_full_name }}</strong>
+            </td>
+            <td>{{ inscripcion.alumno.dni }}</td>
+            <td>{{ inscripcion.materia.nombre }}</td>
+            <td>
+              <small class="text-muted">{{ inscripcion.materia.carrera.nombre }}</small>
+            </td>
+            <td>{{ inscripcion.fecha_inscripcion|date:"d/m/Y" }}</td>
+            <td>
+              {% if inscripcion.activa %}
+              <span class="badge bg-success">Activa</span>
+              {% else %}
+              <span class="badge bg-secondary">Dada de baja</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Paginación -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Paginación" class="mt-4">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page=1{% if request.GET.carrera %}&carrera={{ request.GET.carrera }}{% endif %}{% if request.GET.materia %}&materia={{ request.GET.materia }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+        Primera
+      </a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.carrera %}&carrera={{ request.GET.carrera }}{% endif %}{% if request.GET.materia %}&materia={{ request.GET.materia }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+        Anterior
+      </a>
+    </li>
+    {% endif %}
+    
+    <li class="page-item active">
+      <span class="page-link">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      </span>
+    </li>
+    
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.carrera %}&carrera={{ request.GET.carrera }}{% endif %}{% if request.GET.materia %}&materia={{ request.GET.materia }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+        Siguiente
+      </a>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.carrera %}&carrera={{ request.GET.carrera }}{% endif %}{% if request.GET.materia %}&materia={{ request.GET.materia }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+        Última
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+  <i class="fas fa-info-circle me-2"></i>
+  No se encontraron inscripciones con los filtros seleccionados.
+</div>
+{% endif %}
+
+<!-- Nota informativa -->
+<div class="alert alert-warning mt-4">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  <strong>Modo de visualización:</strong> Este panel es solo para consulta. La gestión de inscripciones (crear/eliminar) debe realizarse desde el panel de administrador.
+</div>
+
+{% endblock %}

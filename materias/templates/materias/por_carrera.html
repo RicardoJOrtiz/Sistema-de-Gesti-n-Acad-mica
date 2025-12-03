@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Materias de {{ carrera.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header mejorado con gradiente y diseño moderno -->
+      <div class="mb-4">
+        <div class="card border-0 shadow-sm"
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; overflow: hidden;">
+          <div class="card-body p-4 position-relative">
+            <!-- Patrón de fondo decorativo -->
+            <div class="position-absolute top-0 end-0 opacity-10"
+              style="font-size: 10rem; line-height: 1; margin-top: -2rem; margin-right: -2rem;">
+              <i class="fas fa-graduation-cap"></i>
+            </div>
+
+            <div class="row align-items-center position-relative">
+              <div class="col-lg-9 col-md-8 mb-3 mb-md-0">
+                <!-- Breadcrumb pequeño -->
+                <nav aria-label="breadcrumb" class="mb-2">
+                  <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item">
+                      <a href="{% url 'carreras:lista' %}" class="text-white text-decoration-none opacity-75">
+                        <i class="fas fa-home me-1"></i>Carreras
+                      </a>
+                    </li>
+                    <li class="breadcrumb-item active text-white" aria-current="page">
+                      {{ carrera.codigo }}
+                    </li>
+                  </ol>
+                </nav>
+
+                <!-- Título principal -->
+                <h1 class="text-white mb-2 fw-bold"
+                  style="font-size: clamp(1.5rem, 4vw, 2.5rem); text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                  <i class="fas fa-book-open me-2"></i>
+                  <span class="d-block d-sm-inline">{{ carrera.nombre }}</span>
+                </h1>
+
+                <!-- Metadatos rápidos -->
+                <div class="d-flex flex-wrap gap-3 text-white">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-clock me-2 opacity-75"></i>
+                    <span class="small"><strong>{{ carrera.duracion_anios }}</strong> años</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-book me-2 opacity-75"></i>
+                    <span class="small"><strong>{{ materias.count }}</strong> materias</span>
+                  </div>
+                  <div class="d-flex align-items-center">
+                    {% if carrera.modalidad == 'presencial' %}
+                    <i class="fas fa-school me-2 opacity-75"></i>
+                    {% elif carrera.modalidad == 'virtual' %}
+                    <i class="fas fa-laptop me-2 opacity-75"></i>
+                    {% else %}
+                    <i class="fas fa-chalkboard-teacher me-2 opacity-75"></i>
+                    {% endif %}
+                    <span class="small">{{ carrera.get_modalidad_display }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-3 col-md-4 text-md-end">
+                <a href="{% url 'carreras:lista' %}" class="btn btn-light btn-lg shadow-sm"
+                  style="border-radius: 50px;">
+                  <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de la carrera -->
+      <div class="card mb-4">
+        <div class="card-body">
+          {% if user.is_authenticated and user.rol == 'alumno' %}
+          {% if not puede_inscribirse %}
+          <div class="alert alert-warning mb-3">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Solo consulta:</strong> No estás inscripto en esta carrera, por lo que no puedes inscribirte a sus
+            materias.
+            Contacta a la administración si deseas inscribirte a esta carrera.
+          </div>
+          {% endif %}
+          {% endif %}
+          <div class="row">
+            <div class="col-lg-8 mb-3 mb-lg-0">
+              <h5 class="mb-2">
+                <i class="fas fa-graduation-cap"></i> {{ carrera.nombre }}
+              </h5>
+              <p class="text-muted mb-2">
+                {% if carrera.descripcion|length > 150 %}
+                <span id="descripcion-corta">{{ carrera.descripcion|truncatechars:150 }}</span>
+                <span id="descripcion-completa" style="display: none;">{{ carrera.descripcion }}</span>
+                <a href="#" id="toggle-descripcion" class="text-primary text-decoration-none">
+                  <small>Ver más</small>
+                </a>
+                {% else %}
+                {{ carrera.descripcion }}
+                {% endif %}
+              </p>
+            </div>
+            <div class="col-lg-4">
+              <dl class="row mb-0">
+                <dt class="col-6">Duración:</dt>
+                <dd class="col-6">{{ carrera.duracion_anios }} años</dd>
+                <dt class="col-6">Materias:</dt>
+                <dd class="col-6 mb-0">{{ materias.count }}</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Materias por año -->
+      {% if materias %}
+      {% regroup materias by anio_cursado as materias_por_anio %}
+      {% for anio in materias_por_anio %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5><i class="fas fa-calendar-alt"></i> {{ anio.grouper }}° Año</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            {% for materia in anio.list %}
+            <div class="col-12 col-sm-6 col-lg-4 col-xl-4 mb-3">
+              <div class="card border-start border-primary border-3">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-title mb-0 small">
+                      <a href="{% url 'materias:detalle' materia.pk %}" class="text-decoration-none text-dark fw-bold">
+                        {{ materia.nombre|truncatewords:5 }}
+                      </a>
+                    </h6>
+                    <code class="text-primary small">{{ materia.codigo }}</code>
+                  </div>
+
+                  <div class="row text-center mb-2 g-2">
+                    <div class="col-4">
+                      <small class="text-muted d-block" style="font-size: 0.7rem;">Cuatrimestre</small>
+                      <span class="badge bg-secondary small">{{ materia.get_cuatrimestre_display_short }}</span>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted d-block" style="font-size: 0.7rem;">Carga Horaria</small>
+                      <span class="text-primary fw-bold small">{{ materia.carga_horaria }}h</span>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted d-block" style="font-size: 0.7rem;">Cupo</small>
+                      {% with estado=materia.get_estado_cupo %}
+                      <span class="badge bg-{{ estado.clase }} small">
+                        {{ materia.get_inscriptos_count }}/{{ materia.cupo_maximo }}
+                      </span>
+                      {% endwith %}
+                    </div>
+                  </div>
+
+                  {% if materia.descripcion %}
+                  <p class="card-text">
+                    <small class="text-muted">
+                      {{ materia.descripcion|truncatewords:15 }}
+                    </small>
+                  </p>
+                  {% endif %}
+
+                  <div class="mt-3">
+                    <div class="mb-2">
+                      {% if materia.activa %}
+                      <span class="badge bg-success">Activa</span>
+                      {% else %}
+                      <span class="badge bg-danger">Inactiva</span>
+                      {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                      {% if user.is_authenticated and user.rol == 'alumno' %}
+                      {% if puede_inscribirse %}
+                      {% if materia.tiene_cupo_disponible and materia.activa %}
+                      <a href="{% url 'inscripciones:inscribirse' materia.pk %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-user-plus me-2"></i>Inscribirse
+                      </a>
+                      {% else %}
+                      <button class="btn btn-secondary btn-sm" disabled>
+                        <i class="fas fa-times me-2"></i>Sin Cupo
+                      </button>
+                      {% endif %}
+                      {% else %}
+                      <div class="alert alert-warning alert-sm py-1 mb-2">
+                        <small><i class="fas fa-lock"></i> Solo información</small>
+                      </div>
+                      {% endif %}
+                      {% endif %}
+                      <a href="{% url 'materias:detalle' materia.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i><span class="d-none d-sm-inline">Ver Detalles</span><span
+                          class="d-sm-none">Detalles</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle fa-2x mb-3"></i>
+        <h5>No hay materias registradas</h5>
+        <p>Esta carrera aún no tiene materias asignadas.</p>
+        {% if user.rol == 'administrador' %}
+        <a href="{% url 'materias:crear' %}" class="btn btn-primary">
+          <i class="fas fa-plus"></i> Crear Primera Materia
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Resumen estadístico -->
+      {% if materias %}
+      <div class="row mt-4 g-3">
+        <div class="col-6 col-sm-3">
+          <div class="card text-center h-100">
+            <div class="card-body py-3">
+              <h6 class="card-title small mb-1">Total Materias</h6>
+              <h3 class="text-primary mb-0">{{ materias.count }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3">
+          <div class="card text-center h-100">
+            <div class="card-body py-3">
+              <h6 class="card-title small mb-1">Materias Activas</h6>
+              <h3 class="text-success mb-0">{{ materias|length }}</h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3">
+          <div class="card text-center h-100">
+            <div class="card-body py-3">
+              <h6 class="card-title small mb-1">Con Cupo</h6>
+              <h3 class="text-info mb-0">
+                {% regroup materias by tiene_cupo_disponible as materias_por_cupo %}
+                {% for grupo in materias_por_cupo %}
+                {% if grupo.grouper %}
+                {{ grupo.list|length }}
+                {% endif %}
+                {% empty %}
+                0
+                {% endfor %}
+              </h3>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3">
+          <div class="card text-center h-100">
+            <div class="card-body py-3">
+              <h6 class="card-title small mb-1">Total Horas</h6>
+              <h3 class="text-warning mb-0">{{ total_horas }}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Breadcrumb personalizado en header */
+  .breadcrumb-item+.breadcrumb-item::before {
+    content: "›";
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  /* Animación sutil al cargar */
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .card[style*="gradient"] {
+    animation: slideInDown 0.6s ease-out;
+  }
+
+  /* Hover effect en breadcrumb */
+  .breadcrumb-item a:hover {
+    opacity: 1 !important;
+    text-decoration: underline !important;
+  }
+
+  /* Responsive ajustes */
+  @media (max-width: 576px) {
+    .card[style*="gradient"] .card-body {
+      padding: 1.5rem 1rem !important;
+    }
+
+    .position-absolute.opacity-10 {
+      font-size: 6rem !important;
+      margin-top: -1rem !important;
+      margin-right: -1rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggleBtn = document.getElementById('toggle-descripcion');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        const corta = document.getElementById('descripcion-corta');
+        const completa = document.getElementById('descripcion-completa');
+
+        if (corta.style.display === 'none') {
+          corta.style.display = 'inline';
+          completa.style.display = 'none';
+          this.innerHTML = '<small>Ver más</small>';
+        } else {
+          corta.style.display = 'none';
+          completa.style.display = 'inline';
+          this.innerHTML = '<small>Ver menos</small>';
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

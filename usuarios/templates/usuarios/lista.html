@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-users"></i> Gestión de Usuarios</h2>
+    <a href="{% url 'usuarios:crear' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Crear Usuario
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-sm-6 col-md-4">
+                <label for="rol" class="form-label">Filtrar por Rol:</label>
+                <select name="rol" id="rol" class="form-select">
+                    <option value="">Todos los roles</option>
+                    {% for codigo, nombre in roles %}
+                        <option value="{{ codigo }}" {% if filtro_rol == codigo %}selected{% endif %}>
+                            {{ nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-sm-6 col-md-4">
+                <label for="buscar" class="form-label">Buscar:</label>
+                <input type="text" name="buscar" id="buscar" 
+                       class="form-control" 
+                       placeholder="Nombre, DNI o email..." 
+                       value="{{ buscar }}">
+            </div>
+            <div class="col-12 col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">
+                    <i class="fas fa-search"></i>
+                    <span class="d-inline ms-1">Buscar</span>
+                </button>
+                <a href="{% url 'usuarios:lista' %}" class="btn btn-secondary flex-fill">
+                    <i class="fas fa-eraser"></i>
+                    <span class="d-inline ms-1">Limpiar</span>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de usuarios -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> 
+            Usuarios ({{ usuarios|length }} {% if page_obj.paginator.count > usuarios|length %}de {{ page_obj.paginator.count }}{% endif %})
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        {% if usuarios %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>DNI</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Último acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>
+                                <br>
+                                <small class="text-muted">@{{ usuario.username }}</small>
+                            </td>
+                            <td>{{ usuario.email }}</td>
+                            <td>{{ usuario.dni }}</td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ usuario.get_rol_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if usuario.is_active %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactivo</span>
+                                {% endif %}
+                                {% if usuario.debe_cambiar_password %}
+                                    <br><span class="badge bg-warning">Cambiar password</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if usuario.last_login %}
+                                    {{ usuario.last_login|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <a href="{% url 'usuarios:detalle' usuario.pk %}" 
+                                       class="btn btn-info btn-sm text-white" title="Ver detalles">
+                                        <i class="fas fa-eye me-1"></i>Ver
+                                    </a>
+                                    <a href="{% url 'usuarios:editar' usuario.pk %}" 
+                                       class="btn btn-warning btn-sm" title="Editar usuario">
+                                        <i class="fas fa-edit me-1"></i>Editar
+                                    </a>
+                                    {% if usuario != request.user %}
+                                    <a href="{% url 'usuarios:eliminar' usuario.pk %}" 
+                                       class="btn btn-danger btn-sm text-white" title="Eliminar usuario">
+                                        <i class="fas fa-trash me-1"></i>Eliminar
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} 
+                        de {{ page_obj.paginator.count }} usuarios
+                    </small>
+                    
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.rol %}&rol={{ request.GET.rol }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.rol %}&rol={{ request.GET.rol }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_obj.number }}</span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.rol %}&rol={{ request.GET.rol }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.rol %}&rol={{ request.GET.rol }}{% endif %}{% if request.GET.buscar %}&buscar={{ request.GET.buscar }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No se encontraron usuarios</h5>
+                {% if buscar or filtro_rol %}
+                    <p class="text-muted">
+                        Intenta ajustar los filtros de búsqueda.
+                    </p>
+                    <a href="{% url 'usuarios:lista' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i> Limpiar 
+                    </a>
+                {% else %}
+                    <p class="text-muted">
+                        Comienza creando tu primer usuario.
+                    </p>
+                    <a href="{% url 'usuarios:crear' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Crear Usuario
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

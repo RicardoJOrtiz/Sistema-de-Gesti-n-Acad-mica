@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Usuario{% endblock %} 
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-user-plus"></i> Crear Nuevo Usuario</h2>
+  <a href="{% url 'usuarios:lista' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Volver
+  </a>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fas fa-user-plus"></i> Datos del Usuario</h5>
+      </div>
+      <div class="card-body">
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          <h6><i class="fas fa-exclamation-triangle"></i> Errores:</h6>
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label
+                  for="{{ form.first_name.id_for_label }}"
+                  class="form-label"
+                  >Nombre:</label
+                >
+                {{ form.first_name }} {% if form.first_name.errors %}
+                <div class="text-danger">{{ form.first_name.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label
+                  for="{{ form.last_name.id_for_label }}"
+                  class="form-label"
+                  >Apellido:</label
+                >
+                {{ form.last_name }} {% if form.last_name.errors %}
+                <div class="text-danger">{{ form.last_name.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label"
+                  >Usuario:</label
+                >
+                {{ form.username }} {% if form.username.errors %}
+                <div class="text-danger">{{ form.username.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label"
+                  >Email:</label
+                >
+                {{ form.email }} {% if form.email.errors %}
+                <div class="text-danger">{{ form.email.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.dni.id_for_label }}" class="form-label"
+                  >DNI:</label
+                >
+                {{ form.dni }} {% if form.dni.errors %}
+                <div class="text-danger">{{ form.dni.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.rol.id_for_label }}" class="form-label"
+                  >Rol:</label
+                >
+                {{ form.rol }} {% if form.rol.errors %}
+                <div class="text-danger">{{ form.rol.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="{{ form.telefono.id_for_label }}" class="form-label"
+                  >Teléfono:</label
+                >
+                {{ form.telefono }} {% if form.telefono.errors %}
+                <div class="text-danger">{{ form.telefono.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label
+                  for="{{ form.fecha_nacimiento.id_for_label }}"
+                  class="form-label"
+                  >Fecha de Nacimiento:</label
+                >
+                {{ form.fecha_nacimiento }} {% if form.fecha_nacimiento.errors%}
+                <div class="text-danger">
+                  {{ form.fecha_nacimiento.errors }}
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.direccion.id_for_label }}" class="form-label"
+              >Dirección:</label
+            >
+            {{ form.direccion }} {% if form.direccion.errors %}
+            <div class="text-danger">{{ form.direccion.errors }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Campo de Carrera (solo para alumnos) -->
+          <div class="mb-3" id="carreraField" style="display: none;">
+            <label for="{{ form.carrera.id_for_label }}" class="form-label">
+              <i class="fas fa-graduation-cap"></i> Carrera: <span class="text-danger">*</span>
+            </label>
+            {{ form.carrera }}
+            {% if form.carrera.errors %}
+            <div class="text-danger mt-2">{{ form.carrera.errors }}</div>
+            {% endif %}
+            <small class="text-muted d-block mt-1">{{ form.carrera.help_text }}</small>
+          </div>
+
+          <!-- Campo de Materias (solo para docentes) -->
+          <div class="mb-3" id="materiasField" style="display: none;">
+            <label class="form-label">
+              <i class="fas fa-book"></i> Materias a cargo:
+            </label>
+            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+              {% if form.materias.field.queryset %}
+                {% regroup form.materias.field.queryset by carrera as materias_por_carrera %}
+                {% for carrera_grupo in materias_por_carrera %}
+                  <div class="mb-3">
+                    <h6 class="text-primary">{{ carrera_grupo.grouper.nombre }}</h6>
+                    {% for materia in carrera_grupo.list %}
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="materias" value="{{ materia.id }}" id="materia_{{ materia.id }}">
+                        <label class="form-check-label" for="materia_{{ materia.id }}">
+                          {{ materia.nombre }} - {{ materia.anio_cursado }}° Año - {{ materia.get_cuatrimestre_display }}
+                        </label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <p class="text-muted">No hay materias disponibles</p>
+              {% endif %}
+            </div>
+            {% if form.materias.errors %}
+            <div class="text-danger mt-2">{{ form.materias.errors }}</div>
+            {% endif %}
+            <small class="text-muted">{{ form.materias.help_text }}</small>
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Crear Usuario
+            </button>
+            <a href="{% url 'usuarios:lista' %}" class="btn btn-secondary">
+              <i class="fas fa-times"></i> Cancelar
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5><i class="fas fa-info-circle"></i> Información</h5>
+      </div>
+      <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+        <p><strong>Contraseña inicial:</strong></p>
+        <p class="text-muted">
+          La contraseña inicial será el número de DNI del usuario. El usuario
+          deberá cambiarla en su primer inicio de sesión.
+        </p>
+
+        <hr />
+
+        <p><strong>Campos obligatorios:</strong></p>
+        <ul class="text-muted">
+          <li>Nombre</li>
+          <li>Apellido</li>
+          <li>Usuario (mín. 4 caracteres)</li>
+          <li>Email</li>
+          <li>DNI (solo números, 7-8 dígitos)</li>
+          <li>Rol</li>
+          <li>Teléfono (alumno, docente, preceptor)</li>
+          <li>Fecha de nacimiento (alumno, docente, preceptor)</li>
+          <li>Carrera (solo para alumnos)</li>
+        </ul>
+
+        <p><strong>Campos opcionales:</strong></p>
+        <ul class="text-muted">
+          <li>Dirección</li>
+          <li>Teléfono (solo para invitados)</li>
+          <li>Fecha de nacimiento (solo para invitados)</li>
+          <li>Materias (solo para docentes)</li>
+        </ul>
+        
+        <hr />
+        
+        <p><strong>Validaciones:</strong></p>
+        <ul class="text-muted small">
+          <li>Usuario: letras, números, - y _</li>
+          <li>DNI: debe ser numérico</li>
+          <li>Fecha: si se ingresa, edad mayor a 17 y menor a 100 años</li>
+          <li>Email, DNI y Usuario deben ser únicos</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRoleSpecificFields(rol) {
+  const carreraField = document.getElementById('carreraField');
+  const materiasField = document.getElementById('materiasField');
+  
+  // Ocultar ambos campos por defecto
+  carreraField.style.display = 'none';
+  materiasField.style.display = 'none';
+  
+  // Mostrar el campo correspondiente según el rol
+  if (rol === 'alumno') {
+    carreraField.style.display = 'block';
+  } else if (rol === 'docente') {
+    materiasField.style.display = 'block';
+  }
+}
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+  const rolSelect = document.querySelector('[name="rol"]');
+  if (rolSelect) {
+    // Mostrar/ocultar según el valor inicial
+    toggleRoleSpecificFields(rolSelect.value);
+    
+    // Agregar evento de cambio
+    rolSelect.addEventListener('change', function() {
+      toggleRoleSpecificFields(this.value);
+    });
+  }
+});
+</script>
+{% endblock %}

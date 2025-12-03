@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}{{ alumno.get_full_name }} - Detalle Alumno{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-user-graduate"></i> Detalle del Alumno</h2>
+  <div>
+    <a href="{% url 'alumnos:lista' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> Volver
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fas fa-info-circle"></i> Información Personal</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Nombre completo:</strong> {{ alumno.get_full_name }}</p>
+            <p><strong>DNI:</strong> {{ alumno.dni }}</p>
+            <p><strong>Número de Legajo:</strong> {{ alumno.numero_legajo }}</p>
+            <p><strong>Email:</strong> {{ alumno.email }}</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Teléfono:</strong> {{ alumno.telefono|default:"No especificado" }}</p>
+            <p>
+              <strong>Fecha de nacimiento:</strong>
+              {% if alumno.fecha_nacimiento %}
+                {{ alumno.fecha_nacimiento|date:"d/m/Y" }}
+              {% else %}
+                No especificada
+              {% endif %}
+            </p>
+            <p><strong>Dirección:</strong> {{ alumno.direccion|default:"No especificada" }}</p>
+            <p>
+              <strong>Fecha de ingreso:</strong>
+              {% if alumno.fecha_ingreso %}
+                {{ alumno.fecha_ingreso|date:"d/m/Y" }}
+              {% else %}
+                No especificada
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5><i class="fas fa-graduation-cap"></i> Carreras</h5>
+      </div>
+      <div class="card-body">
+        {% with carreras=alumno.get_carreras_activas %}
+          {% if carreras %}
+            <ul class="list-group">
+              {% for carrera in carreras %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ carrera.nombre }}</strong>
+                    <br>
+                    <small class="text-muted">{{ carrera.descripcion|truncatewords:15 }}</small>
+                  </div>
+                  <span class="badge bg-info text-dark">Activa</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="alert alert-warning mb-0">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              El alumno no tiene carreras activas asignadas.
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% if alumno.get_carrera_principal %}
+          <div class="mt-3">
+            <p class="mb-0">
+              <strong>Carrera principal:</strong>
+              <span class="badge bg-primary">{{ alumno.get_carrera_principal.nombre }}</span>
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% with inscripciones=alumno.inscripciones.all %}
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5><i class="fas fa-book"></i> Materias Inscriptas</h5>
+      </div>
+      <div class="card-body">
+        {% if inscripciones %}
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Código</th>
+                  <th>Materia</th>
+                  <th>Carrera</th>
+                  <th>Año/Cuatrimestre</th>
+                  <th>Estado</th>
+                  <th>Fecha Inscripción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inscripcion in inscripciones %}
+                <tr>
+                  <td><code class="text-primary">{{ inscripcion.materia.codigo }}</code></td>
+                  <td><strong>{{ inscripcion.materia.nombre }}</strong></td>
+                  <td><span class="badge bg-info text-dark" title="{{ inscripcion.materia.carrera.nombre }}">{{ inscripcion.materia.carrera.nombre|truncatewords:3 }}</span></td>
+                  <td>
+                    <span class="badge bg-secondary">{{ inscripcion.materia.anio_cursado }}° Año</span>
+                    <br><small class="text-muted">{{ inscripcion.materia.get_cuatrimestre_display_short }}</small>
+                  </td>
+                  <td>
+                    {% if inscripcion.activa %}
+                      <span class="badge bg-success">Activa</span>
+                    {% else %}
+                      <span class="badge bg-danger">Inactiva</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ inscripcion.fecha_inscripcion|date:"d/m/Y" }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-2">
+            <p class="text-muted mb-0">
+              <strong>Total de inscripciones:</strong> {{ inscripciones.count }}
+              <span class="ms-3"><strong>Activas:</strong> {{ alumno.get_materias_inscriptas.count }}</span>
+            </p>
+          </div>
+        {% else %}
+          <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            El alumno no tiene materias inscriptas.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5><i class="fas fa-user-circle"></i> Usuario Asociado</h5>
+      </div>
+      <div class="card-body">
+        {% if alumno.usuario %}
+          <p><strong>Usuario:</strong> {{ alumno.usuario.username }}</p>
+          <p><strong>Email usuario:</strong> {{ alumno.usuario.email }}</p>
+          <p>
+            <strong>Estado:</strong>
+            {% if alumno.usuario.is_active %}
+              <span class="badge bg-success">Activo</span>
+            {% else %}
+              <span class="badge bg-danger">Inactivo</span>
+            {% endif %}
+          </p>
+          {% if user.rol == 'administrador' %}
+          <a href="{% url 'usuarios:detalle' alumno.usuario.pk %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-eye me-1"></i>Ver Usuario
+          </a>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-warning mb-0">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Sin usuario asociado
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5><i class="fas fa-cog"></i> Estado</h5>
+      </div>
+      <div class="card-body">
+        <p>
+          <strong>Estado del alumno:</strong>
+          {% if alumno.activo %}
+            <span class="badge bg-success">Activo</span>
+          {% else %}
+            <span class="badge bg-danger">Inactivo</span>
+          {% endif %}
+        </p>
+        {% if alumno.fecha_baja %}
+        <p>
+          <strong>Fecha de baja:</strong><br>
+          {{ alumno.fecha_baja|date:"d/m/Y" }}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">
+        <h5><i class="fas fa-tools"></i> Acciones</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'alumnos:lista' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver a la Lista
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
