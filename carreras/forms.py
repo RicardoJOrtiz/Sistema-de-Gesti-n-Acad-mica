@@ -11,37 +11,37 @@ class CarreraForm(forms.ModelForm):
     class Meta:
         model = Carrera
         fields = [
-            'nombre', 'descripcion', 'duracion_anios',
+            'nombre', 'codigo', 'descripcion', 'duracion_anios',
             'titulo_otorgado', 'modalidad', 'activa'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ingrese el nombre completo de la carrera',
-                'maxlength': '150',
-                'required': 'required',
-                'minlength': '5'
+                'maxlength': '150'
+            }),
+            'codigo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: TDS, TAS, etc.',
+                'maxlength': '10',
+                'style': 'text-transform: uppercase;'
             }),
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Descripción detallada de la carrera, objetivos y perfil profesional',
-                'minlength': '20'
+                'placeholder': 'Descripción detallada de la carrera, objetivos y perfil profesional'
             }),
             'duracion_anios': forms.Select(
-                choices=[(i, f'{i} año{"s" if i > 1 else ""}') for i in range(1, 7)],
-                attrs={'class': 'form-select', 'required': 'required'}
+                choices=[(i, f'{i} año{"s" if i > 1 else ""}') for i in range(1, 11)],
+                attrs={'class': 'form-select'}
             ),
             'titulo_otorgado': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej: Técnico Superior en...',
-                'maxlength': '200',
-                'required': 'required',
-                'minlength': '10'
+                'maxlength': '200'
             }),
             'modalidad': forms.Select(attrs={
-                'class': 'form-select',
-                'required': 'required'
+                'class': 'form-select'
             }),
             'activa': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -57,61 +57,28 @@ class CarreraForm(forms.ModelForm):
             self.fields['activa'].initial = True
             self.fields['modalidad'].initial = 'presencial'
 
-    def generar_codigo(self, nombre):
-        """Genera un código único a partir del nombre de la carrera"""
-        import re
-        from unidecode import unidecode
-        
-        # Convertir a ASCII (eliminar tildes)
-        nombre_ascii = unidecode(nombre)
-        
-        # Extraer palabras significativas (mayores a 2 letras)
-        palabras = re.findall(r'\b[a-zA-Z]{3,}\b', nombre_ascii)
-        
-        # Tomar las iniciales de las primeras palabras
-        if len(palabras) >= 3:
-            codigo_base = ''.join([p[0].upper() for p in palabras[:4]])
-        elif len(palabras) == 2:
-            codigo_base = palabras[0][:2].upper() + palabras[1][:2].upper()
-        elif len(palabras) == 1:
-            codigo_base = palabras[0][:4].upper()
-        else:
-            # Si no hay palabras válidas, usar las primeras letras del nombre
-            codigo_base = re.sub(r'[^a-zA-Z]', '', nombre_ascii)[:4].upper()
-        
-        # Limitar el código base a máximo 8 caracteres para dejar espacio para el contador
-        codigo_base = codigo_base[:8]
-        
-        # Asegurar que el código sea único
-        codigo = codigo_base
-        contador = 1
-        max_intentos = 999  # Límite de seguridad
-        
-        while contador <= max_intentos:
-            # Verificar si el código ya existe en la base de datos
-            queryset = Carrera.objects.filter(codigo=codigo)
+    def clean_codigo(self):
+        """Validación personalizada para el código"""
+        codigo = self.cleaned_data.get('codigo')
+        if codigo:
+            codigo = codigo.upper().strip()
             
-            # Excluir la instancia actual si estamos editando
+            # Verificar que no exista otro código igual (excepto la instancia actual)
+            queryset = Carrera.objects.filter(codigo=codigo)
             if self.instance.pk:
                 queryset = queryset.exclude(pk=self.instance.pk)
             
-            # Si no existe, retornar este código
-            if not queryset.exists():
-                return codigo
-            
-            # Si ya existe, agregar un número y volver a intentar
-            codigo = f"{codigo_base}{contador}"
-            contador += 1
-        
-        # Si llegamos aquí, algo está mal (999 códigos duplicados)
-        raise ValidationError(
-            f'No se pudo generar un código único para la carrera "{nombre}". '
-            'Por favor, contacte al administrador del sistema.'
-        )
-
+            if queryset.exists():
+                raise ValidationError('Ya existe una carrera con este código.')
+                
+            # Verificar formato del código (solo letras y números)
+            if not codigo.replace('_', '').replace('-', '').isalnum():
+                raise ValidationError('El código solo puede contener letras, números, guiones y guiones bajos.')
+                
+        return codigo
 
     def clean_nombre(self):
-        """Validación personalizada para el nombre y generación automática del código"""
+        """Validación personalizada para el nombre"""
         nombre = self.cleaned_data.get('nombre')
         
         if nombre:
@@ -124,21 +91,8 @@ class CarreraForm(forms.ModelForm):
             
             if queryset.exists():
                 raise ValidationError(f'Ya existe una carrera con el nombre "{nombre}".')
-        
+                
         return nombre
-    
-    def save(self, commit=True):
-        """Generar código automáticamente antes de guardar"""
-        instance = super().save(commit=False)
-        
-        # Generar código solo si es una nueva carrera o si el nombre cambió
-        if not instance.pk or 'nombre' in self.changed_data:
-            instance.codigo = self.generar_codigo(instance.nombre)
-        
-        if commit:
-            instance.save()
-        
-        return instance
 
     def clean_duracion_anios(self):
         """Validación de la duración en años"""
@@ -147,24 +101,11 @@ class CarreraForm(forms.ModelForm):
         if duracion:
             if duracion < 1:
                 raise ValidationError('La duración debe ser al menos 1 año.')
-            elif duracion > 6:
-                raise ValidationError('La duración no puede ser mayor a 6 años.')
+            elif duracion > 10:
+                raise ValidationError('La duración no puede ser mayor a 10 años.')
                 
         return duracion
 
-    def clean_descripcion(self):
-        """Validación de la descripción"""
-        descripcion = self.cleaned_data.get('descripcion')
-        
-        if descripcion:
-            descripcion = descripcion.strip()
-            if len(descripcion) < 20:
-                raise ValidationError('La descripción debe tener al menos 20 caracteres para ser descriptiva.')
-            if len(descripcion) > 2000:
-                raise ValidationError('La descripción no puede exceder los 2000 caracteres.')
-                
-        return descripcion
-    
     def clean_titulo_otorgado(self):
         """Validación del título otorgado"""
         titulo = self.cleaned_data.get('titulo_otorgado')
@@ -173,8 +114,6 @@ class CarreraForm(forms.ModelForm):
             titulo = titulo.strip()
             if len(titulo) < 10:
                 raise ValidationError('El título debe tener al menos 10 caracteres.')
-            if len(titulo) > 200:
-                raise ValidationError('El título no puede exceder los 200 caracteres.')
                 
         return titulo
 
@@ -190,7 +129,7 @@ class FiltroCarreraForm(forms.Form):
     )
     
     duracion = forms.ChoiceField(
-        choices=[('', 'Todas las duraciones')] + [(i, f'{i} año{"s" if i > 1 else ""}') for i in range(1, 7)],
+        choices=[('', 'Todas las duraciones')] + [(i, f'{i} año{"s" if i > 1 else ""}') for i in range(1, 11)],
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )

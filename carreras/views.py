@@ -18,8 +18,8 @@ class CarreraListView(ListView):
     
     def get_queryset(self):
         queryset = Carrera.objects.annotate(
-            total_materias=Count('materias', filter=Q(materias__activa=True), distinct=True),
-            total_alumnos=Count('alumnos_inscritos', filter=Q(inscripcioncarrera__activa=True), distinct=True)
+            total_materias=Count('materias', filter=Q(materias__activa=True)),
+            total_alumnos=Count('alumnos', filter=Q(alumnos__activo=True))
         )
         
         # Aplicar filtros desde GET parameters
@@ -46,7 +46,7 @@ class CarreraListView(ListView):
             )
         
         # Mostrar solo carreras activas por defecto (excepto para administradores)
-        if not self.request.user.is_authenticated or self.request.user.rol != 'administrador':
+        if self.request.user.rol != 'administrador':
             queryset = queryset.filter(activa=True)
         
         return queryset.order_by('nombre')
@@ -55,35 +55,21 @@ class CarreraListView(ListView):
         context = super().get_context_data(**kwargs)
         context['filtro_form'] = FiltroCarreraForm(self.request.GET)
         
-        # Si es alumno, agregar información de sus carreras
-        if self.request.user.is_authenticated and self.request.user.es_alumno():
-            try:
-                alumno = self.request.user.alumno_profile
-                context['carreras_inscrito'] = alumno.get_carreras_activas()
-                context['es_alumno'] = True
-            except:
-                context['carreras_inscrito'] = []
-                context['es_alumno'] = False
-        else:
-            context['carreras_inscrito'] = []
-            context['es_alumno'] = False
-        
-        # Estadísticas para el dashboard - solo para administradores
-        if not context['es_alumno']:
-            queryset_completo = self.get_queryset()
-            context['carreras_activas'] = queryset_completo.filter(activa=True).count()
-            context['total_materias'] = sum(
-                carrera.total_materias for carrera in queryset_completo if hasattr(carrera, 'total_materias')
-            )
-            context['total_alumnos'] = sum(
-                carrera.total_alumnos for carrera in queryset_completo if hasattr(carrera, 'total_alumnos')
-            )
+        # Estadísticas para el dashboard
+        carreras = context['carreras']
+        context['carreras_activas'] = carreras.filter(activa=True).count()
+        context['total_materias'] = sum(
+            carrera.total_materias for carrera in carreras if hasattr(carrera, 'total_materias')
+        )
+        context['total_alumnos'] = sum(
+            carrera.total_alumnos for carrera in carreras if hasattr(carrera, 'total_alumnos')
+        )
         
         return context
 
 
-class CarreraDetailView(DetailView):
-    """Vista de detalle de carrera con materias y estadísticas - Accesible para todos"""
+class CarreraDetailView(LoginRequiredMixin, DetailView):
+    """Vista de detalle de carrera con materias y estadísticas"""
     model = Carrera
     template_name = 'carreras/detalle.html'
     context_object_name = 'carrera'
@@ -157,7 +143,7 @@ class CarreraDeleteView(AdminRequiredMixin, DeleteView):
         self.object = self.get_object()
         
         # Verificar si tiene alumnos activos
-        if self.object.alumnos_inscritos.filter(inscripcioncarrera__activa=True).exists():
+        if self.object.alumnos.filter(activo=True).exists():
             messages.error(request, 
                 f'No se puede eliminar la carrera "{self.object.nombre}" porque tiene alumnos activos.')
             return redirect('carreras:detalle', pk=self.object.pk)
@@ -177,7 +163,7 @@ class CarreraDeleteView(AdminRequiredMixin, DeleteView):
         carrera = self.get_object()
         
         # Información para mostrar en la confirmación
-        context['alumnos_count'] = carrera.alumnos_inscritos.filter(inscripcioncarrera__activa=True).distinct().count()
+        context['alumnos_count'] = carrera.alumnos.filter(activo=True).count()
         context['materias_count'] = carrera.materias.filter(activa=True).count()
         context['puede_eliminar'] = context['alumnos_count'] == 0
         
@@ -218,6 +204,53 @@ class CarrerasPorModalidadView(ListView):
         return context
 
 
+class CarreraCreateView(AdminRequiredMixin, CreateView):
+    """Vista para crear carreras"""
+    model = Carrera
+    template_name = 'carreras/crear.html'
+    fields = ['nombre', 'codigo', 'descripcion', 'duracion_anios', 'titulo_otorgado', 'modalidad']
+    success_url = reverse_lazy('carreras:lista')
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Carrera {self.object.nombre} creada correctamente.')
+        return response
+
+
+class CarreraUpdateView(AdminRequiredMixin, UpdateView):
+    """Vista para editar carreras"""
+    model = Carrera
+    template_name = 'carreras/editar.html'
+    fields = ['nombre', 'codigo', 'descripcion', 'duracion_anios', 'titulo_otorgado', 'modalidad', 'activa']
+    
+    def get_success_url(self):
+        return reverse_lazy('carreras:detalle', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, f'Carrera {self.object.nombre} actualizada correctamente.')
+        return response
+
+
+class CarreraDeleteView(AdminRequiredMixin, DeleteView):
+    """Vista para eliminar carreras"""
+    model = Carrera
+    template_name = 'carreras/eliminar.html'
+    success_url = reverse_lazy('carreras:lista')
+    
+    def delete(self, request, *args, **kwargs):
+        carrera = self.get_object()
+        nombre = carrera.nombre
+        
+        if not carrera.puede_eliminarse():
+            messages.error(request, 'No se puede eliminar la carrera porque tiene materias o alumnos asociados.')
+            return redirect('carreras:lista')
+        
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, f'Carrera {nombre} eliminada correctamente.')
+        return response
+
+
 class OfertaAcademicaView(ListView):
     """Vista de oferta académica para alumnos"""
     model = Carrera
@@ -226,21 +259,3 @@ class OfertaAcademicaView(ListView):
     
     def get_queryset(self):
         return Carrera.objects.filter(activa=True).prefetch_related('materias').order_by('nombre')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Si es alumno, agregar información de sus carreras
-        if self.request.user.is_authenticated and self.request.user.es_alumno():
-            try:
-                alumno = self.request.user.alumno_profile
-                context['carreras_inscrito'] = alumno.get_carreras_activas()
-                context['es_alumno'] = True
-            except:
-                context['carreras_inscrito'] = []
-                context['es_alumno'] = False
-        else:
-            context['carreras_inscrito'] = []
-            context['es_alumno'] = False
-        
-        return context

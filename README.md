@@ -94,8 +94,9 @@ gestion_academica/
 ### 2. Clonar el proyecto
 
 ```bash
-git clone <url-del-repositorio>
-cd gestion_academica
+git clone https://github.com/RicardoJOrtiz/Sistema-de-Gesti-n-Acad-mica.git
+
+cd Sistema-de-Gesti-n-Acad-mica
 ```
 
 ### 3. Crear entorno virtual
