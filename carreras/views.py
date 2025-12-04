@@ -19,7 +19,7 @@ class CarreraListView(ListView):
     def get_queryset(self):
         queryset = Carrera.objects.annotate(
             total_materias=Count('materias', filter=Q(materias__activa=True)),
-            total_alumnos=Count('alumnos', filter=Q(alumnos__activo=True))
+            total_alumnos=Count('alumnos_inscritos', filter=Q(alumnos_inscritos__activo=True), distinct=True)
         )
         
         # Aplicar filtros desde GET parameters
@@ -55,14 +55,14 @@ class CarreraListView(ListView):
         context = super().get_context_data(**kwargs)
         context['filtro_form'] = FiltroCarreraForm(self.request.GET)
         
-        # Estadísticas para el dashboard
-        carreras = context['carreras']
-        context['carreras_activas'] = carreras.filter(activa=True).count()
+        # Estadísticas para el dashboard - usar get_queryset() en lugar del slice paginado
+        queryset = self.get_queryset()
+        context['carreras_activas'] = queryset.filter(activa=True).count()
         context['total_materias'] = sum(
-            carrera.total_materias for carrera in carreras if hasattr(carrera, 'total_materias')
+            carrera.total_materias for carrera in queryset if hasattr(carrera, 'total_materias')
         )
         context['total_alumnos'] = sum(
-            carrera.total_alumnos for carrera in carreras if hasattr(carrera, 'total_alumnos')
+            carrera.total_alumnos for carrera in queryset if hasattr(carrera, 'total_alumnos')
         )
         
         return context
@@ -143,7 +143,7 @@ class CarreraDeleteView(AdminRequiredMixin, DeleteView):
         self.object = self.get_object()
         
         # Verificar si tiene alumnos activos
-        if self.object.alumnos.filter(activo=True).exists():
+        if self.object.alumnos_inscritos.filter(activo=True).exists():
             messages.error(request, 
                 f'No se puede eliminar la carrera "{self.object.nombre}" porque tiene alumnos activos.')
             return redirect('carreras:detalle', pk=self.object.pk)
@@ -163,7 +163,7 @@ class CarreraDeleteView(AdminRequiredMixin, DeleteView):
         carrera = self.get_object()
         
         # Información para mostrar en la confirmación
-        context['alumnos_count'] = carrera.alumnos.filter(activo=True).count()
+        context['alumnos_count'] = carrera.alumnos_inscritos.filter(activo=True).count()
         context['materias_count'] = carrera.materias.filter(activa=True).count()
         context['puede_eliminar'] = context['alumnos_count'] == 0
         
